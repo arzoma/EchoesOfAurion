@@ -175,6 +175,9 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 
 	glEnable(GL_TEXTURE_2D);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -201,6 +204,7 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 
 	glEnd();
 
+	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 
 }

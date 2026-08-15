@@ -17,7 +17,7 @@ enum GameState{
 	MAIN_MENU,
 	GAMEPLAY,
 	SETTINGS,
-	INFORMATION,
+	CREDITS,
 
 };
 
@@ -72,7 +72,7 @@ void iDraw()
 		break;
 
 
-	case INFORMATION:
+	case CREDITS:
 
 		// To be added
 
@@ -107,12 +107,7 @@ void iMouse(int button, int state, int mx, int my)
 {
 	if (currentState == MAIN_MENU)
 	{
-		int result = mainMenu.mouseClick(
-			button,
-			state,
-			mx,
-			my
-			);
+		int result = mainMenu.mouseClick(button, state, mx, my);
 
 		switch (result)
 		{
@@ -132,14 +127,15 @@ void iMouse(int button, int state, int mx, int my)
 			break;
 
 		case 4:
+			// credits
+			currentState = CREDITS;
+			break;
+		
+		case 5:
 			// exit
 			exit(0);
 			break;
 
-		case 5:
-			// information
-			currentState = INFORMATION;
-			break;
 		}
 
 		return;

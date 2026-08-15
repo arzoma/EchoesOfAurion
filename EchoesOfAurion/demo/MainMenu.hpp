@@ -11,14 +11,14 @@ private:
 	int newGameButton;
 	int continueButton;
 	int settingsButton;
+	int creditsButton;
 	int exitButton;
-	int infoButton;
 
 	int hoverNewGameButton;
 	int hoverContinueButton;
 	int hoverSettingsButton;
+	int hoverCreditsButton;
 	int hoverExitButton;
-	int hoverInfoButton;
 
 	int mouseX;
 	int mouseY;

@@ -14,13 +14,13 @@ void MainMenu::loadImages()
 	continueButton = iLoadImage("Images//continue.png");
 	settingsButton = iLoadImage("Images//settings.png");
 	exitButton = iLoadImage("Images//exit.png");
-	infoButton = iLoadImage("Images//info.png");
+	creditsButton = iLoadImage("Images//credits.png");
 
 	hoverNewGameButton = iLoadImage("Images//hover_new_game.png");
 	hoverContinueButton = iLoadImage("Images//hover_continue.png");
 	hoverSettingsButton = iLoadImage("Images//hover_settings.png");
 	hoverExitButton = iLoadImage("Images//hover_exit.png");
-	hoverInfoButton = iLoadImage("Images//hover_info.png");
+	hoverCreditsButton = iLoadImage("Images//hover_credits.png");
 }
 
 void MainMenu::draw()
@@ -29,61 +29,61 @@ void MainMenu::draw()
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, background);
 
 	// logo
-	iShowImage(340, 500, 600, 150, logo);
+	iShowImage(390, 420, 500, 281, logo);
 
 
 	// new game
-	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 330 && mouseY <= 410)
+	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 375 && mouseY <= 425)
 	{
-		iShowImage(490, 330, 300, 80, hoverNewGameButton);
+		iShowImage(490, 315, 300, 169, hoverNewGameButton);
 	}
 	else
 	{
-		iShowImage(490, 330, 300, 80, newGameButton);
+		iShowImage(490, 315, 300, 169, newGameButton);
 	}
 
 
 	// continue
-	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 240 && mouseY <= 320)
+	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 295 && mouseY <= 345)
 	{
-		iShowImage(490, 240, 300, 80, hoverContinueButton);
+		iShowImage(490, 235, 300, 169, hoverContinueButton);
 	}
 	else
 	{
-		iShowImage(490, 240, 300, 80, continueButton);
+		iShowImage(490, 235, 300, 169, continueButton);
 	}
 
 
 	// settings
-	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 150 && mouseY <= 230)
+	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 215 && mouseY <= 265)
 	{
-		iShowImage(490, 150, 300, 80, hoverSettingsButton);
+		iShowImage(490, 155, 300, 169, hoverSettingsButton);
 	}
 	else
 	{
-		iShowImage(490, 150, 300, 80, settingsButton);
+		iShowImage(490, 155, 300, 169, settingsButton);
+	}
+
+
+	// credits
+	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 135 && mouseY <= 185)
+	{
+		iShowImage(490, 75, 300, 169, hoverCreditsButton);
+	}
+	else
+	{
+		iShowImage(490, 75, 300, 169, creditsButton);
 	}
 
 
 	// exit
-	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 60 && mouseY <= 140)
+	if (mouseX >= 490 && mouseX <= 790 && mouseY >= 55 && mouseY <= 105)
 	{
-		iShowImage(490, 60, 300, 80, hoverExitButton);
+		iShowImage(490, -5, 300, 169, hoverExitButton);
 	}
 	else
 	{
-		iShowImage(490, 60, 300, 80, exitButton);
-	}
-
-
-	// information
-	if (mouseX >= 1200 && mouseX <= 1250 && mouseY >= 20 && mouseY <= 70)
-	{
-		iShowImage(1200, 20, 50, 50, hoverInfoButton);
-	}
-	else
-	{
-		iShowImage(1200, 20, 50, 50, infoButton);
+		iShowImage(490, -5, 300, 169, exitButton);
 	}
 }
 
@@ -97,35 +97,35 @@ int MainMenu::mouseClick(int button, int state, int mx, int my)
 {
 
 	// new game
-	if (mx >= 490 && mx <= 790 && my >= 330 && my <= 410)
+	if (mx >= 490 && mx <= 790 && my >= 375 && my <= 425)
 	{
 		return 1;
 	}
 
 
 	// continue
-	if (mx >= 490 && mx <= 790 && my >= 240 && my <= 320)
+	if (mx >= 490 && mx <= 790 && my >= 295 && my <= 345)
 	{
 		return 2;
 	}
 
 
 	// settings
-	if (mx >= 490 && mx <= 790 && my >= 150 && my <= 230)
+	if (mx >= 490 && mx <= 790 && my >= 215 && my <= 265)
 	{
 		return 3;
 	}
 
 
-	// exit
-	if (mx >= 490 && mx <= 790 && my >= 60 && my <= 140)
+	// credits
+	if (mx >= 490 && mx <= 790 && my >= 135 && my <= 185)
 	{
 		return 4;
 	}
 
 
-	// information
-	if (mx >= 1200 && mx <= 1250 && my >= 20 && my <= 70)
+	// exit
+	if (mx >= 490 && mx <= 790 && my >= 55 && my <= 105)
 	{
 		return 5;
 	}
