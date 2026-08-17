@@ -5,7 +5,7 @@ class MainMenu{
 
 private:
 
-	int background;
+	int menuBackground;
 	int logo;
 
 	int newGameButton;

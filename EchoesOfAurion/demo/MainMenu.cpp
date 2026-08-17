@@ -6,7 +6,7 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture);
 
 void MainMenu::loadImages()
 {
-	background = iLoadImage("Images//main_menu_bg.png");
+	menuBackground = iLoadImage("Images//main_menu_bg.png");
 
 	logo = iLoadImage("Images//logo.png");
 
@@ -26,7 +26,7 @@ void MainMenu::loadImages()
 void MainMenu::draw()
 {
 	// background
-	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, background);
+	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menuBackground);
 
 	// logo
 	iShowImage(390, 420, 500, 281, logo);
