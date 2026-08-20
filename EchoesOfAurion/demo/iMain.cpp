@@ -3,6 +3,7 @@
 #include "Balloon.hpp"
 #include "Utils.hpp"
 #include "MainMenu.hpp"
+#include "Settings.hpp"
 #include "Constants.hpp"
 
 const int TOTAL_BALLOON = 5;
@@ -24,6 +25,8 @@ enum GameState{
 GameState currentState = MAIN_MENU;
 
 MainMenu mainMenu;
+
+Settings settings;
 
 void iDraw()
 {
@@ -67,7 +70,7 @@ void iDraw()
 
 	case SETTINGS:
 
-		// To be added
+		settings.draw();
 
 		break;
 
@@ -90,6 +93,12 @@ void iMouseMove(int mx, int my)
 
 	}
 
+	if (currentState == SETTINGS){
+
+		settings.mouseMove(mx, my);
+
+	}
+
 }
 
 void iPassiveMouseMove(int mx, int my)
@@ -98,6 +107,12 @@ void iPassiveMouseMove(int mx, int my)
 	if (currentState == MAIN_MENU){
 
 		mainMenu.mouseMove(mx, my);
+
+	}
+
+	if (currentState == SETTINGS){
+
+		settings.mouseMove(mx, my);
 
 	}
 
@@ -141,6 +156,15 @@ void iMouse(int button, int state, int mx, int my)
 		return;
 	}
 
+	//settings
+	if (currentState == SETTINGS){
+
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		{
+			settings.mouseClick(mx, my);
+		}
+
+	}
 
 	// gameplay
 	if (currentState == GAMEPLAY)
@@ -218,6 +242,7 @@ int main()
 	iInitialize(SCREEN_WIDTH, SCREEN_HEIGHT, "Echoes of Aurion");
 	
 	mainMenu.loadImages();
+	settings.loadImages();
 
 	initBalloons();
 	

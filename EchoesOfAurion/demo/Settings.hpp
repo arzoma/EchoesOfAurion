@@ -29,7 +29,7 @@ public:
 
 	void mouseMove(int mx, int my);
 
-	int mouseClick(int button, int state, int mx, int my);
+	void mouseClick(int mx, int my);
 
 	bool isMusicOn();
 	bool isSfxOn();

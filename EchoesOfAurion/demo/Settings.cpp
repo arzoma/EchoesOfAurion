@@ -4,25 +4,24 @@
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int texture);
 
-
 const int LABEL_WIDTH = 280;
 const int LABEL_HEIGHT = 158;   
 
-const int LABEL_MUSIC_X = 129;
-const int LABEL_MUSIC_Y = 267;
+const int LABEL_MUSIC_X = 270;
+const int LABEL_MUSIC_Y = 315;
 
-const int LABEL_SFX_X = 129;
-const int LABEL_SFX_Y = 396;
+const int LABEL_SFX_X = 270;
+const int LABEL_SFX_Y = 215;
 
 
-const int TOGGLE_WIDTH = 160;
-const int TOGGLE_HEIGHT = 90;    
+const int TOGGLE_WIDTH = 110;
+const int TOGGLE_HEIGHT = 61;    
 
-const int TOGGLE_MUSIC_X = 803;
-const int TOGGLE_MUSIC_Y = 279;
+const int TOGGLE_MUSIC_X = 860;
+const int TOGGLE_MUSIC_Y = 365;
 
-const int TOGGLE_SFX_X = 803;
-const int TOGGLE_SFX_Y = 445;
+const int TOGGLE_SFX_X = 860;
+const int TOGGLE_SFX_Y = 265;
 
 void Settings::loadImages()
 {
@@ -67,18 +66,24 @@ void Settings::draw()
 	}
 }
 
-void Settings::mouseClick(int button, int state, int x, int y)
+void Settings::mouseMove(int mx, int my)
+{
+	mouseX = mx;
+	mouseY = my;
+}
+
+void Settings::mouseClick(int mx, int my)
 {
 	// toggle music
-	if (x >= TOGGLE_MUSIC_X && x <= TOGGLE_MUSIC_X + TOGGLE_WIDTH &&
-		y >= TOGGLE_MUSIC_Y && y <= TOGGLE_MUSIC_Y + TOGGLE_HEIGHT)
+	if (mx >= TOGGLE_MUSIC_X && mx <= TOGGLE_MUSIC_X + TOGGLE_WIDTH &&
+		my >= TOGGLE_MUSIC_Y && my <= TOGGLE_MUSIC_Y + TOGGLE_HEIGHT)
 	{
 		musicOn = !musicOn;
 	}
 
 	// toggle sfx
-	if (x >= TOGGLE_SFX_X && x <= TOGGLE_SFX_X + TOGGLE_WIDTH &&
-		y >= TOGGLE_SFX_Y && y <= TOGGLE_SFX_Y + TOGGLE_HEIGHT)
+	if (mx >= TOGGLE_SFX_X && mx <= TOGGLE_SFX_X + TOGGLE_WIDTH &&
+		my >= TOGGLE_SFX_Y && my <= TOGGLE_SFX_Y + TOGGLE_HEIGHT)
 	{
 		sfxOn = !sfxOn;
 	}
