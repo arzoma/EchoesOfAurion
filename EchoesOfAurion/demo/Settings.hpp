@@ -6,7 +6,6 @@ class Settings{
 private:
 
 	int settingsBackground;
-	int titleText;
 
 	int labelMusic;
 	int labelSfx;
@@ -18,9 +17,6 @@ private:
 
 	bool musicOn = true;
 	bool sfxOn = true;
-
-	bool hoverMusicToggle = false;
-	bool hoverSfxToggle = false;
 
 	int mouseX;
 	int mouseY;
