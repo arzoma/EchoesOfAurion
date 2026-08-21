@@ -4,6 +4,7 @@
 #include "Utils.hpp"
 #include "MainMenu.hpp"
 #include "Settings.hpp"
+#include "Credits.hpp"
 #include "Constants.hpp"
 
 const int TOTAL_BALLOON = 5;
@@ -27,6 +28,8 @@ GameState currentState = MAIN_MENU;
 MainMenu mainMenu;
 
 Settings settings;
+
+Credits credits;
 
 void iDraw()
 {
@@ -77,7 +80,7 @@ void iDraw()
 
 	case CREDITS:
 
-		// To be added
+		credits.draw();
 
 		break;
 	}
@@ -99,6 +102,12 @@ void iMouseMove(int mx, int my)
 
 	}
 
+	if (currentState == CREDITS){
+
+		credits.mouseMove(mx, my);
+
+	}
+
 }
 
 void iPassiveMouseMove(int mx, int my)
@@ -113,6 +122,12 @@ void iPassiveMouseMove(int mx, int my)
 	if (currentState == SETTINGS){
 
 		settings.mouseMove(mx, my);
+
+	}
+
+	if (currentState == CREDITS){
+
+		credits.mouseMove(mx, my);
 
 	}
 
@@ -162,6 +177,16 @@ void iMouse(int button, int state, int mx, int my)
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
 			settings.mouseClick(mx, my);
+		}
+
+	}
+
+	// credits
+	if (currentState == CREDITS){
+
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		{
+			credits.mouseClick(button, state, mx, my);
 		}
 
 	}
@@ -243,6 +268,7 @@ int main()
 	
 	mainMenu.loadImages();
 	settings.loadImages();
+	credits.loadImages();
 
 	initBalloons();
 	
