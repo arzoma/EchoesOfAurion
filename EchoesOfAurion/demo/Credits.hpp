@@ -15,6 +15,9 @@ private:
 	int hoverFrame22;
 	int hoverFrame28;
 
+	int backButton;
+	int hoverBackButton;
+
 	int mouseX;
 	int mouseY;
 
@@ -26,7 +29,7 @@ public:
 
 	void mouseMove(int mx, int my);
 
-	void mouseClick(int button, int state, int mx, int my);
+	int mouseClick(int button, int state, int mx, int my);
 
 };
 

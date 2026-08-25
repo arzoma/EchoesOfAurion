@@ -23,6 +23,10 @@ const int TOGGLE_MUSIC_Y = 365;
 const int TOGGLE_SFX_X = 860;
 const int TOGGLE_SFX_Y = 265;
 
+const int BACK_BUTTON_SIZE = 70;
+const int BACK_BUTTON_X = 30;
+const int BACK_BUTTON_Y = SCREEN_HEIGHT - BACK_BUTTON_SIZE - 30;
+
 void Settings::loadImages()
 {
 	settingsBackground = iLoadImage("Images//settings_bg.png");
@@ -34,6 +38,10 @@ void Settings::loadImages()
 	toggleMusicOff = iLoadImage("Images//toggle_button_off.png");
 	toggleSfxOn = iLoadImage("Images//toggle_button_on.png");
 	toggleSfxOff = iLoadImage("Images//toggle_button_off.png");
+
+	backButton = iLoadImage("Images//back_button.png");
+	hoverBackButton = iLoadImage("Images//hover_back_button.png");
+
 }
 
 void Settings::draw()
@@ -64,6 +72,19 @@ void Settings::draw()
 	{
 		iShowImage(TOGGLE_SFX_X, TOGGLE_SFX_Y, TOGGLE_WIDTH, TOGGLE_HEIGHT, toggleSfxOff);
 	}
+
+	// back button
+	if (mouseX >= BACK_BUTTON_X && mouseX <= BACK_BUTTON_X + BACK_BUTTON_SIZE &&
+		mouseY >= BACK_BUTTON_Y && mouseY <= BACK_BUTTON_Y + BACK_BUTTON_SIZE)
+	{
+		// hover
+		iShowImage(BACK_BUTTON_X, BACK_BUTTON_Y, BACK_BUTTON_SIZE, BACK_BUTTON_SIZE, hoverBackButton);
+	}
+	else
+	{
+		// default
+		iShowImage(BACK_BUTTON_X, BACK_BUTTON_Y, BACK_BUTTON_SIZE, BACK_BUTTON_SIZE, backButton);
+	}
 }
 
 void Settings::mouseMove(int mx, int my)
@@ -72,7 +93,7 @@ void Settings::mouseMove(int mx, int my)
 	mouseY = my;
 }
 
-void Settings::mouseClick(int mx, int my)
+int Settings::mouseClick(int mx, int my)
 {
 	// toggle music
 	if (mx >= TOGGLE_MUSIC_X && mx <= TOGGLE_MUSIC_X + TOGGLE_WIDTH &&
@@ -87,4 +108,13 @@ void Settings::mouseClick(int mx, int my)
 	{
 		sfxOn = !sfxOn;
 	}
+
+	// back button
+	if (mx >= BACK_BUTTON_X && mx <= BACK_BUTTON_X + BACK_BUTTON_SIZE &&
+		my >= BACK_BUTTON_Y && my <= BACK_BUTTON_Y + BACK_BUTTON_SIZE)
+	{
+		return 1;
+	}
+
+	return 0;
 }

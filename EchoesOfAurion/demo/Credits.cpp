@@ -16,6 +16,10 @@ const int FRAME_22_Y = 15;
 const int FRAME_28_X = 842;
 const int FRAME_28_Y = 15;
 
+const int BACK_BUTTON_SIZE = 70;
+const int BACK_BUTTON_X = 30;
+const int BACK_BUTTON_Y = SCREEN_HEIGHT - BACK_BUTTON_SIZE - 30;
+
 void Credits::loadImages()
 {
 	creditsBackground = iLoadImage("Images//credits_bg.png");
@@ -27,6 +31,10 @@ void Credits::loadImages()
 	hoverFrame20 = iLoadImage("Images//hover_credits_20.png");
 	hoverFrame22 = iLoadImage("Images//hover_credits_22.png");
 	hoverFrame28 = iLoadImage("Images//hover_credits_28.png");
+
+	backButton = iLoadImage("Images//back_button.png");
+	hoverBackButton = iLoadImage("Images//hover_back_button.png");
+
 }
 
 void Credits::draw()
@@ -72,6 +80,20 @@ void Credits::draw()
 		// default frame
 		iShowImage(FRAME_28_X, FRAME_28_Y, FRAME_WIDTH, FRAME_HEIGHT, frame28);
 	}
+
+	// back button
+	if (mouseX >= BACK_BUTTON_X && mouseX <= BACK_BUTTON_X + BACK_BUTTON_SIZE &&
+		mouseY >= BACK_BUTTON_Y && mouseY <= BACK_BUTTON_Y + BACK_BUTTON_SIZE)
+	{
+		// hover
+		iShowImage(BACK_BUTTON_X, BACK_BUTTON_Y, BACK_BUTTON_SIZE, BACK_BUTTON_SIZE, hoverBackButton);
+	}
+	else
+	{
+		// default
+		iShowImage(BACK_BUTTON_X, BACK_BUTTON_Y, BACK_BUTTON_SIZE, BACK_BUTTON_SIZE, backButton);
+	}
+
 }
 
 void Credits::mouseMove(int mx, int my)
@@ -80,7 +102,13 @@ void Credits::mouseMove(int mx, int my)
 	mouseY = my;
 }
 
-void Credits::mouseClick(int button, int state, int mx, int my)
+int Credits::mouseClick(int button, int state, int mx, int my)
 {
+	if (mx >= BACK_BUTTON_X && mx <= BACK_BUTTON_X + BACK_BUTTON_SIZE &&
+		my >= BACK_BUTTON_Y && my <= BACK_BUTTON_Y + BACK_BUTTON_SIZE)
+	{
+		return 1;
+	}
 
+	return 0;
 }

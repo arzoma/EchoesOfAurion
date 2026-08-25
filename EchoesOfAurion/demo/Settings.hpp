@@ -15,6 +15,9 @@ private:
 	int toggleSfxOn;
 	int toggleSfxOff;
 
+	int backButton;
+	int hoverBackButton;
+
 	bool musicOn = true;
 	bool sfxOn = true;
 
@@ -29,7 +32,7 @@ public:
 
 	void mouseMove(int mx, int my);
 
-	void mouseClick(int mx, int my);
+	int mouseClick(int mx, int my);
 
 	bool isMusicOn();
 	bool isSfxOn();

@@ -176,7 +176,13 @@ void iMouse(int button, int state, int mx, int my)
 
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
-			settings.mouseClick(mx, my);
+			int result = settings.mouseClick(mx, my);
+
+			if (result == 1)
+			{
+				// back button clicked
+				currentState = MAIN_MENU;
+			}
 		}
 
 	}
@@ -186,7 +192,13 @@ void iMouse(int button, int state, int mx, int my)
 
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
-			credits.mouseClick(button, state, mx, my);
+			int result = credits.mouseClick(button, state, mx, my);
+
+			if (result == 1)
+			{
+				// back button clicked
+				currentState = MAIN_MENU;
+			}
 		}
 
 	}
