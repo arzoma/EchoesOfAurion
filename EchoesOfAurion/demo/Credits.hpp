@@ -18,6 +18,16 @@ private:
 	int backButton;
 	int hoverBackButton;
 
+	int infoBox20;
+	int infoBox22;
+	int infoBox28;
+
+	int hoverSearch20;
+	int hoverSearch22;
+	int hoverSearch28;
+
+	int openInfoBox;
+
 	int mouseX;
 	int mouseY;
 
