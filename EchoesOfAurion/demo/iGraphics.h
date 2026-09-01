@@ -35,6 +35,7 @@ void fixedUpdate();
 void iMouseMove(int, int);
 void iPassiveMouseMove(int, int);
 void iMouse(int button, int state, int x, int y);
+void iKeyboard(unsigned char key);
 
 static void  __stdcall iA0(HWND,unsigned int, unsigned int, unsigned long){if(!iAnimPause[0])iAnimFunction[0]();}
 static void  __stdcall iA1(HWND,unsigned int, unsigned int, unsigned long){if(!iAnimPause[1])iAnimFunction[1]();}
@@ -481,6 +482,7 @@ void keyboardHandlerUp2FF(int key, int x, int y)
 void keyboardHandler1FF(unsigned char key, int x, int y)
 {
 	keyPressed[key] = 1;
+	iKeyboard(key);
 	glutPostRedisplay();
 }
 void keyboardHandler2FF(int key, int x, int y)

@@ -63,14 +63,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Credits.cpp" />
+    <ClCompile Include="Dialoguebox.cpp" />
     <ClCompile Include="iMain.cpp" />
     <ClCompile Include="MainMenu.cpp" />
+    <ClCompile Include="Map.cpp" />
+    <ClCompile Include="Nameinput.cpp" />
+    <ClCompile Include="Npc.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.hpp" />
     <ClInclude Include="Credits.hpp" />
+    <ClInclude Include="Dialoguebox.hpp" />
     <ClInclude Include="MainMenu.hpp" />
+    <ClInclude Include="Map.hpp" />
+    <ClInclude Include="Nameinput.hpp" />
+    <ClInclude Include="Npc.hpp" />
+    <ClInclude Include="Player.hpp" />
     <ClInclude Include="Settings.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
