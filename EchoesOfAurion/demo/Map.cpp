@@ -4,6 +4,8 @@
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int img);
 
+// void iRectangle(int x, int y, int width, int height);
+
 void Map::init(char imagePath[], int worldWidth, int worldHeight, bool isScrollable)
 {
 	background = iLoadImage(imagePath);
@@ -75,6 +77,19 @@ bool Map::isBlocked(Rect targetRect)
 void Map::draw()
 {
 	iShowImage(-cameraX, -cameraY, mapWidth, mapHeight, background);
+
+	/*iSetColor(255, 0, 0);
+
+	for (int i = 0; i < obstacleCount; i++)
+	{
+		iRectangle(
+			obstacles[i].x - cameraX,
+			obstacles[i].y - cameraY,
+			obstacles[i].w,
+			obstacles[i].h
+			);
+	}*/
+
 }
 
 int Map::getCameraX() { return cameraX; }

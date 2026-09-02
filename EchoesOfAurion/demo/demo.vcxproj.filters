@@ -42,6 +42,12 @@
     <ClCompile Include="Nameinput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cookinggame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Servinggame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenu.hpp">
@@ -69,6 +75,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Nameinput.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cookinggame.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Servinggame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

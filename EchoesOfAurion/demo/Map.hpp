@@ -6,7 +6,7 @@ struct Rect
 	int x, y, w, h;
 };
 
-const int MAX_OBSTACLES = 20;
+const int MAX_OBSTACLES = 100;
 
 class Map
 {
