@@ -6,7 +6,7 @@
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int img);
 void iSetColor(double r, double g, double b);
-void iText(double x, double y, char string[], void *font);
+void iText(double x, double y, char *str, void *font);
 void iFilledRectangle(double x, double y, double width, double height);
 
 #define GLUT_BITMAP_HELVETICA_18 ((void*)8)

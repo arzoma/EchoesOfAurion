@@ -58,6 +58,8 @@ int mouseY = 0;
 int throneStep = 0;  // 0 = king talking, 1 = mc's reply, 2 = moved on
 int hallwayStep = 0; // 0 = mc's lines playing, 1 = "Travel to Emberfall" prompt showing
 
+int restaurantDialogueStep = 0;
+
 char* kingLines[] = {
 	"The situation in Aurion is becoming worse by the day.",
 	"The Sacred Seals are weakening, and monsters have begun appearing throughout the kingdom.",
