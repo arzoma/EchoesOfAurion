@@ -10,6 +10,7 @@ class DialogueBox
 private:
 
 	int npcBox;
+	int currentNpcBox;
 	int mcBox;
 	int optionBox;
 	int optionHover1;
@@ -30,7 +31,7 @@ public:
 
 	void loadImages();
 
-	void startDialogue(char speakerName[], char* dialogueLines[], int count, bool mcSpeaking);
+	void startDialogue(char speakerName[], char* dialogueLines[], int count, bool mcSpeaking, int npcBoxImage = -1);
 	void advance();
 	bool isActive();
 

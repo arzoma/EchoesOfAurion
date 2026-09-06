@@ -110,7 +110,7 @@ void DialogueBox::loadImages()
 	showingOptions = false;
 }
 
-void DialogueBox::startDialogue(char speakerName[], char* dialogueLines[], int count, bool mcSpeaking)
+void DialogueBox::startDialogue(char speakerName[], char* dialogueLines[], int count, bool mcSpeaking, int npcBoxImage)
 {
 	strcpy_s(speaker, speakerName);
 
@@ -129,6 +129,7 @@ void DialogueBox::startDialogue(char speakerName[], char* dialogueLines[], int c
 	active = true;
 	showingOptions = false;
 	isMCSpeaking = mcSpeaking;
+	currentNpcBox = (npcBoxImage == -1) ? npcBox : npcBoxImage;
 }
 
 void DialogueBox::advance()
@@ -201,7 +202,7 @@ void DialogueBox::draw(int mouseX, int mouseY)
 		return;
 	}
 
-	int box = isMCSpeaking ? mcBox : npcBox;
+	int box = isMCSpeaking ? mcBox : currentNpcBox;
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, box);
 
 	iSetColor(255, 255, 255);
