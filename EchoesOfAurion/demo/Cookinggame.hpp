@@ -9,8 +9,11 @@ enum CookingPhase
 	COOKING_FAILED
 };
 
-const int COOKING_TIME_LIMIT_TICKS = 18000; // 3 minutes at a 10ms tick
+const int COOKING_TIME_LIMIT_TICKS = 6000; // 1 minute at a 10ms tick
 const int COOKING_MAX_MISTAKES = 3;
+
+const int COOKING_TARGET_DISHES = 15;
+const int COOKING_TARGET_DISHES_WITH_PERK = 10;
 
 class CookingGame
 {
@@ -22,6 +25,7 @@ private:
 	int ingredientsListImg;
 	int neededDishImg;
 	int cookButtonImg;
+	int cookButtonHoverImg;
 
 	int mcIdle;
 	int mcHand;
@@ -38,6 +42,8 @@ private:
 	int timeLeftTicks;
 	int score;
 	int mistakes;
+
+	int targetDishes;
 
 	int currentDish;
 	bool selected[7];
@@ -59,10 +65,10 @@ private:
 public:
 
 	void loadImages();
-	void start();
+	void start(bool hasPerk = false);
 
 	void update();
-	void draw();
+	void draw(int mouseX, int mouseY);
 
 	void handleClick(int mx, int my);
 

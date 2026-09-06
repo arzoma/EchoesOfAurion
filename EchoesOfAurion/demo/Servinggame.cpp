@@ -49,8 +49,10 @@ void ServingGame::loadImages()
 	mcIdle = iLoadImage("Images//mc_serving_idle.png");
 	mcWalkLeft1 = iLoadImage("Images//mc_serving_walk_left_1.png");
 	mcWalkLeft2 = iLoadImage("Images//mc_serving_walk_left_2.png");
+	mcWalkLeft3 = iLoadImage("Images//mc_serving_walk_left_3.png");
 	mcWalkRight1 = iLoadImage("Images//mc_serving_walk_right_1.png");
 	mcWalkRight2 = iLoadImage("Images//mc_serving_walk_right_2.png");
+	mcWalkRight3 = iLoadImage("Images//mc_serving_walk_right_3.png");
 
 	rnpcWalkRight = iLoadImage("Images//rnpc_walk_right.png");
 	rnpcWalkLeft = iLoadImage("Images//rnpc_walk_left.png");
@@ -66,7 +68,7 @@ void ServingGame::loadImages()
 	failedImg = iLoadImage("Images//failed.png");
 }
 
-void ServingGame::start()
+void ServingGame::start(bool hasPerk)
 {
 	phase = SERVING_PLAYING;
 	timeLeftTicks = SERVING_TIME_LIMIT_TICKS;
@@ -74,6 +76,7 @@ void ServingGame::start()
 	mistakes = 0;
 	finished = false;
 	retryRequested = false;
+	targetCustomers = hasPerk ? SERVING_TARGET_CUSTOMERS_WITH_PERK : SERVING_TARGET_CUSTOMERS;
 
 	trayDish = -1;
 	mcX = SCREEN_WIDTH * MC_HOME_X;
@@ -170,7 +173,7 @@ void ServingGame::updateMcMovement()
 	}
 
 	mcWalkFrameTimer++;
-	if (mcWalkFrameTimer >= 15) { mcWalkFrameTimer = 0; mcWalkFrame = 1 - mcWalkFrame; }
+	if (mcWalkFrameTimer >= 15) { mcWalkFrameTimer = 0; mcWalkFrame = (mcWalkFrame + 1) % 4; }
 
 	if (mcX == targetX)
 	{
@@ -184,6 +187,10 @@ void ServingGame::updateMcMovement()
 			{
 				customers[seat].state = CUST_WALK_OUT;
 				score++;
+				if (score >= targetCustomers)
+				{
+					phase = SERVING_SUCCESS;
+				}
 			}
 			else
 			{
@@ -207,7 +214,7 @@ void ServingGame::update()
 	if (timeLeftTicks <= 0)
 	{
 		timeLeftTicks = 0;
-		phase = SERVING_SUCCESS;
+		phase = SERVING_FAILED;
 		return;
 	}
 
@@ -326,8 +333,18 @@ void ServingGame::draw()
 	int mcImg = mcIdle;
 	if (mcMoving)
 	{
-		if (mcMovingRight) mcImg = (mcWalkFrame == 0) ? mcWalkRight1 : mcWalkRight2;
-		else                mcImg = (mcWalkFrame == 0) ? mcWalkLeft1 : mcWalkLeft2;
+		if (mcMovingRight) 
+		{
+			if (mcWalkFrame == 0) mcImg = mcWalkRight1;
+			else if (mcWalkFrame == 2) mcImg = mcWalkRight3;
+			else mcImg = mcWalkRight2; // frame 1 or 3 - the middle pose
+		}
+		else
+		{
+			if (mcWalkFrame == 0) mcImg = mcWalkLeft1;
+			else if (mcWalkFrame == 2) mcImg = mcWalkLeft3;
+			else mcImg = mcWalkLeft2;
+		}
 	}
 	int mcW = (int)(SCREEN_WIDTH * MC_W);
 	int mcH = (int)(SCREEN_HEIGHT * MC_H);
@@ -356,7 +373,7 @@ void ServingGame::draw()
 	char timeText[20], scoreText[20];
 	int secondsLeft = timeLeftTicks / 100;
 	sprintf_s(timeText, "%02d:%02d", secondsLeft / 60, secondsLeft % 60);
-	sprintf_s(scoreText, "Score: %d", score);
+	sprintf_s(scoreText, "Score: %d Target: %d", score, targetCustomers);
 
 	iSetColor(255, 255, 255);
 	iText(SCREEN_WIDTH * TIME_TEXT_X, SCREEN_HEIGHT * TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
@@ -366,5 +383,16 @@ void ServingGame::draw()
 	else if (phase == SERVING_FAILED) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);
 }
 
-bool ServingGame::isFinished() { return finished; }
-bool ServingGame::isRetryRequested() { return retryRequested; }
+bool ServingGame::isFinished()
+{
+	if (!finished) return false;
+	finished = false;
+	return true;
+}
+
+bool ServingGame::isRetryRequested()
+{
+	if (!retryRequested) return false;
+	retryRequested = false;
+	return true;
+}

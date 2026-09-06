@@ -97,7 +97,7 @@ void Player::updateAnimation()
 		if (walkTimer >= 15)
 		{
 			walkTimer = 0;
-			walkFrame = 1 - walkFrame;
+			walkFrame = (walkFrame + 1) % 4;
 		}
 		return;
 	}
@@ -151,9 +151,15 @@ void Player::draw(int cameraX, int cameraY)
 		case DIR_BACK:
 			image = (walkFrame == 0) ? walkBack1 : walkBack2;  break;
 		case DIR_LEFT:
-			image = (walkFrame == 0) ? walkLeft1 : walkLeft2;  break;
+			if (walkFrame == 0) image = walkLeft1;
+			else if (walkFrame == 2) image = walkLeft2;
+			else image = idleLeft;
+			break;
 		case DIR_RIGHT:
-			image = (walkFrame == 0) ? walkRight1 : walkRight2; break;
+			if (walkFrame == 0) image = walkRight1;
+			else if (walkFrame == 2) image = walkRight2;
+			else image = idleRight;
+			break;
 		case DIR_FRONT:
 		default:
 			image = (walkFrame == 0) ? walkFront1 : walkFront2; break;

@@ -31,6 +31,88 @@ enum GameState{
 
 GameState currentState = MAIN_MENU;
 
+const int FADE_TICKS = 20;
+
+enum FadePhase{
+
+	FADE_NONE,
+	FADE_OUT,
+	FADE_IN
+
+};
+
+FadePhase fadePhase = FADE_NONE;
+int fadeTick = 0;
+GameState fadePendingState = MAIN_MENU;
+
+void requestFade(GameState next)
+{
+	fadePendingState = next;
+	fadePhase = FADE_OUT;
+	fadeTick = 0;
+}
+
+void drawFadeOverlay()
+{
+	if (fadePhase == FADE_NONE) return;
+
+	float alpha;
+
+	if (fadePhase == FADE_OUT)
+	{
+		alpha = (float)fadeTick / FADE_TICKS;
+	}
+	else
+	{
+		alpha = 1.0f - (float)fadeTick / FADE_TICKS;
+	}
+
+	if (alpha < 0.0f)
+	{
+		alpha = 0.0f;
+	}
+	if (alpha > 1.0f)
+	{
+		alpha = 1.0f;
+	}
+
+	glDisable(GL_TEXTURE_2D);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(0.0f, 0.0f, 0.0f, alpha);
+	
+	glBegin(GL_QUADS);
+
+	glVertex2f(0.0f, 0.0f);
+	glVertex2f((float)SCREEN_WIDTH, 0.0f);
+	glVertex2f((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+	glVertex2f(0.0f, (float)SCREEN_HEIGHT);
+
+	glEnd();
+
+	glDisable(GL_BLEND);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void updateFade()
+{
+	if (fadePhase == FADE_NONE) return;
+
+	fadeTick++;
+
+	if (fadePhase == FADE_OUT && fadeTick >= FADE_TICKS)
+	{
+		currentState = fadePendingState;
+		fadePhase = FADE_IN;
+		fadeTick = 0;
+	}
+	else if (fadePhase == FADE_IN && fadeTick >= FADE_TICKS)
+	{
+		fadePhase = FADE_NONE;
+	}
+}
+
 MainMenu mainMenu;
 Settings settings;
 Credits credits;
@@ -57,8 +139,7 @@ int mouseY = 0;
 
 int throneStep = 0;  // 0 = king talking, 1 = mc's reply, 2 = moved on
 int hallwayStep = 0; // 0 = mc's lines playing, 1 = "Travel to Emberfall" prompt showing
-
-int restaurantDialogueStep = 0;
+int restaurantStep = -1; // -1 = waiting for restaurant npc click, 0 = restaurant npc's lines, 1 = mc's lines, 2 = the two options
 
 char* kingLines[] = {
 	"The situation in Aurion is becoming worse by the day.",
@@ -117,8 +198,49 @@ char* restaurantMcLines3[] =
 	"Alright, I'll help."
 };
 
+char* restaurantReturnOwnerLines1[] =
+{
+	"You did well. Thank you.",
+	"I suppose I owe you the information I promised."
+};
+
+char* restaurantReturnMcLines1[] =
+{
+	"What do you know about the guardian?"
+};
+
+char* restaurantReturnOwnerLines2[] =
+{
+	"He came here a few days ago. He seemed worried about the sacred seal.",
+	"He asked me about the old road leading into Silverleaf Forest."
+};
+
+char* restaurantReturnMcLines2[] =
+{
+	"The forest? Why?"
+};
+
+char* restaurantReturnOwnerLines3[] =
+{
+	"He said he had reason to believe something was wrong there."
+};
+
+char* restaurantReturnMcLines3[] =
+{
+	"So that's where he went."
+	"Thank you. I'll head there next."
+};
+
+char* restaurantReturnOwnerLines4[] =
+{
+	"You're welcome. And be careful."
+};
+
 char restaurantOption1[] = "I'll cook.";
 char restaurantOption2[] = "I'll serve.";
+
+const int RESTAURANT_NPC_LINE_COUNT = 4;
+const int MC_RESTAURANT_LINE_COUNT = 3;
 
 const int THRONE_PLAYER_X = 595, THRONE_PLAYER_Y = 150;
 const int HALLWAY_PLAYER_X = 595, HALLWAY_PLAYER_Y = 300;
@@ -140,6 +262,11 @@ const int RESTAURANT_TRIGGER_Y = 1250;
 const int RESTAURANT_TRIGGER_W = 200;
 const int RESTAURANT_TRIGGER_H = 180;
 
+const int VILLAGE_EXIT_X = 0;
+const int VILLAGE_EXIT_Y = 0;
+const int VILLAGE_EXIT_W = 60;
+const int VILLAGE_EXIT_H = 60;
+
 const double TRAVEL_TEXT_X_MIN = 0.40, TRAVEL_TEXT_X_MAX = 0.60;
 const double TRAVEL_TEXT_Y_MIN = 0.10, TRAVEL_TEXT_Y_MAX = 0.16;
 
@@ -154,63 +281,95 @@ bool rectanglesOverlap(Rect a, Rect b)
 
 void enterThroneRoom()
 {
-	currentState = THRONE_ROOM;
+	//currentState = THRONE_ROOM;
 	throneStep = 0;
 
 	player.init(THRONE_PLAYER_X, THRONE_PLAYER_Y);
 	player.setFacing(DIR_BACK);
 
 	dialogueBox.startDialogue("King", kingLines, KING_LINE_COUNT, false);
+
+	requestFade(THRONE_ROOM);
 }
 
 void enterHallway()
 {
-	// will add a screen fade function later
-	currentState = HALLWAY;
+	//currentState = HALLWAY;
 	hallwayStep = 0;
 
 	player.init(HALLWAY_PLAYER_X, HALLWAY_PLAYER_Y);
 	player.setFacing(DIR_FRONT);
 
 	dialogueBox.startDialogue(nameInput.getName(), hallwayLines, HALLWAY_LINE_COUNT, true);
+
+	requestFade(HALLWAY);
 }
 
 void enterVillage()
 {
-	currentState = VILLAGE;
+	//currentState = VILLAGE;
 
 	player.init(VILLAGE_SPAWN_X, VILLAGE_SPAWN_Y);
 	player.setFacing(DIR_FRONT);
 
 	villageMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	requestFade(VILLAGE);
 }
 
 void enterRestaurant()
 {
-	currentState = RESTAURANT;
+	//currentState = RESTAURANT;
 
-	restaurantDialogueStep = 0;
+	restaurantStep = -1;
 
-	player.init(
-		RESTAURANT_PLAYER_X,
-		RESTAURANT_PLAYER_Y
-		);
-
+	player.init(RESTAURANT_PLAYER_X, RESTAURANT_PLAYER_Y);
 	player.setFacing(DIR_FRONT);
+
+	requestFade(RESTAURANT);
+}
+
+void returnToRestaurantAfterMinigame()
+{
+	restaurantStep = 100;
+
+	player.init(RESTAURANT_PLAYER_X, RESTAURANT_PLAYER_Y);
+	player.setFacing(DIR_BACK);
+
+	dialogueBox.startDialogue("Restaurant Owner", restaurantReturnOwnerLines1, 2, false);
+	dialogueBox.startDialogue(nameInput.getName(), restaurantReturnMcLines1, 1, true);
+	dialogueBox.startDialogue("Restaurant Owner", restaurantReturnOwnerLines2, 2, false);
+	dialogueBox.startDialogue(nameInput.getName(), restaurantReturnMcLines2, 1, true);
+	dialogueBox.startDialogue("Restaurant Owner", restaurantReturnOwnerLines3, 1, false);
+	dialogueBox.startDialogue(nameInput.getName(), restaurantReturnMcLines3, 2, true);
+	dialogueBox.startDialogue("Restaurant Owner", restaurantReturnOwnerLines4, 1, false);
+
+	requestFade(RESTAURANT);
 }
 
 void enterCookingGame()
 {
-	currentState = COOKING_GAME;
-
+	//currentState = COOKING_GAME;
 	cookingGame.start();
+	requestFade(COOKING_GAME);
 }
 
 void enterServingGame()
 {
-	currentState = SERVING_GAME;
-
+	//currentState = SERVING_GAME;
 	servingGame.start();
+	requestFade(SERVING_GAME);
+}
+
+void exitRestaurantToVillage()
+{
+	player.init(RESTAURANT_DOOR_X + RESTAURANT_DOOR_W / 2 - PLAYER_WIDTH / 2,
+		RESTAURANT_DOOR_Y - PLAYER_HEIGHT - 20);
+	player.setFacing(DIR_FRONT);
+
+	villageMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	requestFade(VILLAGE);
 }
 
 void confirmName()
@@ -286,28 +445,24 @@ void iDraw()
 	case RESTAURANT:
 
 		restaurantMap.draw();
-
 		restaurantNpc.draw(0, 0);
-
 		player.draw(0, 0);
-
 		dialogueBox.draw(mouseX, mouseY);
-
 		break;
 
 	case COOKING_GAME:
 
-		cookingGame.draw();
-
+		cookingGame.draw(mouseX, mouseY);
 		break;
 
 	case SERVING_GAME:
 
 		servingGame.draw();
-
 		break;
 
 	}
+
+	drawFadeOverlay();
 }
 
 
@@ -356,7 +511,7 @@ void iMouse(int button, int state, int mx, int my)
 		{
 		case 1:
 			// new game
-			currentState = NAME_INPUT;
+			requestFade(NAME_INPUT);
 			break;
 
 		case 2:
@@ -366,12 +521,12 @@ void iMouse(int button, int state, int mx, int my)
 
 		case 3:
 			// settings
-			currentState = SETTINGS;
+			requestFade(SETTINGS);
 			break;
 
 		case 4:
 			// credits
-			currentState = CREDITS;
+			requestFade(CREDITS);
 			break;
 		
 		case 5:
@@ -384,7 +539,7 @@ void iMouse(int button, int state, int mx, int my)
 		return;
 	}
 
-	//settings
+	// settings
 	if (currentState == SETTINGS){
 
 		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -394,7 +549,7 @@ void iMouse(int button, int state, int mx, int my)
 			if (result == 1)
 			{
 				// back button clicked
-				currentState = MAIN_MENU;
+				requestFade(MAIN_MENU);
 			}
 			return;
 		}
@@ -411,7 +566,7 @@ void iMouse(int button, int state, int mx, int my)
 			if (result == 1)
 			{
 				// back button clicked
-				currentState = MAIN_MENU;
+				requestFade(MAIN_MENU);
 			}
 			return;
 		}
@@ -513,7 +668,6 @@ void iMouse(int button, int state, int mx, int my)
 				if (option == 1)
 				{
 					enterCookingGame();
-
 					return;
 				}
 
@@ -523,104 +677,61 @@ void iMouse(int button, int state, int mx, int my)
 				if (option == 2)
 				{
 					enterServingGame();
-
 					return;
 				}
 
 				return;
 			}
 
+
 			dialogueBox.advance();
 
-			if (dialogueBox.isActive())
+			if (!dialogueBox.isActive())
 			{
+				switch (restaurantStep)
+				{
+				case 1:
+					// owner line 1 finished -> mc replies
+					restaurantStep = 2;
+					dialogueBox.startDialogue(nameInput.getName(), restaurantMcLines1, 1, true);
+					break;
+
+				case 2:
+					// mc reply 1 finished -> owner lines 2
+					restaurantStep = 3;
+					dialogueBox.startDialogue("Restaurant Owner", restaurantOwnerLines2, 2, false);
+					break;
+
+				case 3:
+					// owner lines 2 finished -> mc reply 2
+					restaurantStep = 4;
+					dialogueBox.startDialogue(nameInput.getName(), restaurantMcLines2, 1, true);
+					break;
+
+				case 4:
+					// mc reply 2 finished -> owner line 3
+					restaurantStep = 5;
+					dialogueBox.startDialogue("Restaurant Owner", restaurantOwnerLines3, 1, false);
+					break;
+
+				case 5:
+					// owner line 3 finished -> mc reply 3
+					restaurantStep = 6;
+					dialogueBox.startDialogue(nameInput.getName(), restaurantMcLines3, 1, true);
+					break;
+
+				case 6:
+					// mc reply 3 finished -> show the two options
+					restaurantStep = 7;
+					dialogueBox.startOptions(restaurantOption1, restaurantOption2);
+					break;
+				}
+
 				return;
 			}
-
-			switch (restaurantDialogueStep)
-			{
-
-			case 1:
-
-				restaurantDialogueStep = 2;
-
-				dialogueBox.startDialogue(
-					nameInput.getName(),
-					restaurantMcLines1,
-					1,
-					true
-					);
-
-				break;
-
-			case 2:
-
-				restaurantDialogueStep = 3;
-
-				dialogueBox.startDialogue(
-					"Restaurant Owner",
-					restaurantOwnerLines2,
-					2,
-					false
-					);
-
-				break;
-
-			case 3:
-
-				restaurantDialogueStep = 4;
-
-				dialogueBox.startDialogue(
-					nameInput.getName(),
-					restaurantMcLines2,
-					1,
-					true
-					);
-
-				break;
-
-			case 4:
-
-				restaurantDialogueStep = 5;
-
-				dialogueBox.startDialogue(
-					"Restaurant Owner",
-					restaurantOwnerLines3,
-					1,
-					false
-					);
-
-				break;
-
-			case 5:
-
-				restaurantDialogueStep = 6;
-
-				dialogueBox.startDialogue(
-					nameInput.getName(),
-					restaurantMcLines3,
-					1,
-					true
-					);
-
-				break;
-
-			case 6:
-
-				restaurantDialogueStep = 7;
-
-				dialogueBox.startOptions(
-					restaurantOption1,
-					restaurantOption2
-					);
-
-				break;
-			}
-
-			return;
 		}
 
-		if (restaurantDialogueStep == 0)
+		if (restaurantStep == -1)
 		{
 			Rect npcRect =
 			{
@@ -639,41 +750,23 @@ void iMouse(int button, int state, int mx, int my)
 				1
 			};
 
-			if (rectanglesOverlap(
-				npcRect,
-				mouseRect
-				))
+			if (rectanglesOverlap(npcRect, mouseRect))
 			{
-				restaurantDialogueStep = 1;
-
-
-				dialogueBox.startDialogue(
-					"Restaurant Owner",
-					restaurantOwnerLines1,
-					1,
-					false
-					);
+				restaurantStep = 1;
+				dialogueBox.startDialogue("Restaurant Owner", restaurantOwnerLines1, 1, false);
 			}
-
 
 			return;
 		}
-
 
 		return;
 	}
 
 	if (currentState == COOKING_GAME)
 	{
-		if (
-			button == GLUT_LEFT_BUTTON &&
-			state == GLUT_DOWN
-			)
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
-			cookingGame.handleClick(
-				mx,
-				my
-				);
+			cookingGame.handleClick(mx, my);
 		}
 
 		return;
@@ -681,15 +774,9 @@ void iMouse(int button, int state, int mx, int my)
 
 	if (currentState == SERVING_GAME)
 	{
-		if (
-			button == GLUT_LEFT_BUTTON &&
-			state == GLUT_DOWN
-			)
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 		{
-			servingGame.handleClick(
-				mx,
-				my
-				);
+			servingGame.handleClick(mx, my);
 		}
 
 		return;
@@ -712,40 +799,33 @@ void iKeyboard(unsigned char key)
 
 void fixedUpdate()
 {
-	if (currentState != VILLAGE)
+	if (currentState == VILLAGE)
 	{
-		return;
-	}
 
-	bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
-	bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
-	bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
-	bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
 
-	player.handleInput(up, down, left, right, villageMap);
+		player.handleInput(up, down, left, right, villageMap);
 
-	Rect restaurantTrigger =
-	{
-		RESTAURANT_TRIGGER_X,
-		RESTAURANT_TRIGGER_Y,
-		RESTAURANT_TRIGGER_W,
-		RESTAURANT_TRIGGER_H
-	};
+		Rect restaurantTrigger =
+		{
+			RESTAURANT_TRIGGER_X,
+			RESTAURANT_TRIGGER_Y,
+			RESTAURANT_TRIGGER_W,
+			RESTAURANT_TRIGGER_H
+		};
 
 
-	if (
-		rectanglesOverlap(
-		player.getRect(),
-		restaurantTrigger
-		)
-		)
-	{
-		enterRestaurant();
+		if (rectanglesOverlap(player.getRect(), restaurantTrigger))
+		{
+			enterRestaurant();
+
+		}
 
 		return;
 	}
-
-	return;
 
 	if (currentState == RESTAURANT)
 	{
@@ -755,99 +835,69 @@ void fixedUpdate()
 			return;
 		}
 
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
 
-		bool up =
-			isKeyPressed('w') ||
-			isSpecialKeyPressed(GLUT_KEY_UP);
+		player.handleInput(up, down, left, right, restaurantMap);
 
+		Rect villageExitTrigger = { VILLAGE_EXIT_X, VILLAGE_EXIT_Y, VILLAGE_EXIT_W, VILLAGE_EXIT_H };
 
-		bool down =
-			isKeyPressed('s') ||
-			isSpecialKeyPressed(GLUT_KEY_DOWN);
-
-
-		bool left =
-			isKeyPressed('a') ||
-			isSpecialKeyPressed(GLUT_KEY_LEFT);
-
-
-		bool right =
-			isKeyPressed('d') ||
-			isSpecialKeyPressed(GLUT_KEY_RIGHT);
-
-
-		player.handleInput(
-			up,
-			down,
-			left,
-			right,
-			restaurantMap
-			);
-
-
-		return;
-	}
-
-	if (currentState == COOKING_GAME)
-	{
-		cookingGame.update();
-
-
-		// Cooking game completed successfully.
-		if (cookingGame.isFinished())
+		if (rectanglesOverlap(player.getRect(), villageExitTrigger))
 		{
-			enterRestaurant();
-
+			exitRestaurantToVillage();
 			return;
 		}
-
-
-		// Cooking game failed and player clicked retry.
-		if (cookingGame.isRetryRequested())
-		{
-			cookingGame.start();
-
-			return;
-		}
-
-
-		return;
-	}
-
-
-	if (currentState == SERVING_GAME)
-	{
-		servingGame.update();
-
-
-		// Serving game completed successfully.
-		if (servingGame.isFinished())
-		{
-			enterRestaurant();
-
-			return;
-		}
-
-
-		// Serving game failed and player clicked retry.
-		if (servingGame.isRetryRequested())
-		{
-			servingGame.start();
-
-			return;
-		}
-
 
 		return;
 	}
 
 }
 
-void update(){
-
+void update()
+{
+	updateFade();
 	fixedUpdate();
 	player.updateAnimation();
 
+	if (currentState == COOKING_GAME)
+	{
+		cookingGame.update();
+
+		if (cookingGame.isFinished())
+		{
+			returnToRestaurantAfterMinigame();
+			return;
+		}
+
+		if (cookingGame.isRetryRequested())
+		{
+			cookingGame.start();
+			return;
+		}
+
+		return;
+	}
+
+	if (currentState == SERVING_GAME)
+	{
+		servingGame.update();
+
+		if (servingGame.isFinished())
+		{
+			returnToRestaurantAfterMinigame();
+			return;
+		}
+
+		if (servingGame.isRetryRequested())
+		{
+			servingGame.start();
+			return;
+		}
+
+		return;
+	}
 }
 
 int main()
@@ -860,6 +910,8 @@ int main()
 	settings.loadImages();
 	credits.loadImages();
 	nameInput.loadImages();
+	cookingGame.loadImages();
+	servingGame.loadImages();
 
 	player.loadImages();
 	dialogueBox.loadImages();
@@ -911,18 +963,14 @@ int main()
 	king.init(595, 425, PLAYER_WIDTH, PLAYER_HEIGHT, "King");
 	king.loadImage("Images//king.png");
 
-	npc1.init(172, 1086, PLAYER_WIDTH, PLAYER_HEIGHT, "NPC1"); // near the bridge
+	npc1.init(172, 1086, PLAYER_WIDTH, PLAYER_HEIGHT, "Hooded Man"); // near the bridge
 	npc1.loadImage("Images//idle_npc_1.png");
 
-	npc2.init(2410, 315, PLAYER_WIDTH, PLAYER_HEIGHT, "NPC2"); // near a house
+	npc2.init(2410, 315, PLAYER_WIDTH, PLAYER_HEIGHT, "Villager"); // near a house
 	npc2.loadImage("Images//idle_npc_2.png");
 
 	restaurantNpc.init(RESTAURANT_NPC_X, RESTAURANT_NPC_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Restaurant Owner");
 	restaurantNpc.loadImage("Images//idle_npc_3.png");
-
-	cookingGame.loadImages();
-
-	servingGame.loadImages();
 	
 	iStart();
 	return 0;

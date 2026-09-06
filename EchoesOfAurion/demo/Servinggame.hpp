@@ -28,8 +28,11 @@ struct Customer
 	int walkFrameTimer;
 };
 
-const int SERVING_TIME_LIMIT_TICKS = 18000; // 3 minutes at a 10ms tick
+const int SERVING_TIME_LIMIT_TICKS = 6000; // 1 minute at a 10ms tick
 const int SERVING_MAX_MISTAKES = 3;
+
+const int SERVING_TARGET_CUSTOMERS = 15;
+const int SERVING_TARGET_CUSTOMERS_WITH_PERK = 10;
 
 class ServingGame
 {
@@ -42,8 +45,8 @@ private:
 	int orderBubble;
 
 	int mcIdle;
-	int mcWalkLeft1, mcWalkLeft2;
-	int mcWalkRight1, mcWalkRight2;
+	int mcWalkLeft1, mcWalkLeft2, mcWalkLeft3;
+	int mcWalkRight1, mcWalkRight2, mcWalkRight3;
 
 	int rnpcWalkRight;
 	int rnpcWalkLeft;
@@ -59,6 +62,7 @@ private:
 	int timeLeftTicks;
 	int score;
 	int mistakes;
+	int targetCustomers;
 
 	Customer customers[3];
 
@@ -83,7 +87,7 @@ private:
 public:
 
 	void loadImages();
-	void start();
+	void start(bool hasPerk = false);
 
 	void update();
 	void draw();

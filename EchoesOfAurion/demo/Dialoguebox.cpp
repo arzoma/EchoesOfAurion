@@ -2,12 +2,28 @@
 #include "DialogueBox.hpp"
 #include "Constants.hpp"
 
+#include "glut.h"
+
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int img);
 void iSetColor(double r, double g, double b);
 void iText(double x, double y, char *str, void *font);
 
-#define GLUT_BITMAP_HELVETICA_18 ((void*)8)
+//#define GLUT_BITMAP_HELVETICA_18 ((void*)8)
+
+//int glutBitmapWidth(void* font, int character);
+
+int getTextWidth(const char* text)
+{
+	int width = 0;
+
+	for (int i = 0; text[i] != '\0'; i++)
+	{
+		width += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, text[i]);
+	}
+
+	return width;
+}
 
 void drawWrappedText(
 	const char* text,
@@ -84,7 +100,7 @@ void DialogueBox::loadImages()
 {
 	npcBox = iLoadImage("Images//dialogue_box.png");
 	mcBox = iLoadImage("Images//dialogue_box_mc.png");
-	optionBox = iLoadImage("Images//dialogue_option.png");
+	optionBox = iLoadImage("Images//dialogue_options.png");
 	optionHover1 = iLoadImage("Images//dialogue_option_1.png");
 	optionHover2 = iLoadImage("Images//dialogue_option_2.png");
 
@@ -189,11 +205,21 @@ void DialogueBox::draw(int mouseX, int mouseY)
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, box);
 
 	iSetColor(255, 255, 255);
-	iText(340, 258, speaker, GLUT_BITMAP_HELVETICA_18);            // name plate
+
+	//iText(340, 225, speaker, GLUT_BITMAP_HELVETICA_18);            // name plate
+
+	int nameWidth = getTextWidth(speaker);
+
+	int namePlateCenterX = 550;
+
+	int nameX = namePlateCenterX - nameWidth / 2;
+
+	iText(nameX, 215, speaker, GLUT_BITMAP_HELVETICA_18);
+
 	drawWrappedText(
 		lines[currentLine],
 		280,
-		155,
+		120,
 		600,
 		30
 		); // dialogue text

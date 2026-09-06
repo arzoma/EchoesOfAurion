@@ -49,6 +49,7 @@ void CookingGame::loadImages()
 	ingredientsListImg = iLoadImage("Images//cooking_ingredients_list.png");
 	neededDishImg = iLoadImage("Images//needed_dish.png");
 	cookButtonImg = iLoadImage("Images//cook_button.png");
+	cookButtonHoverImg = iLoadImage("Images//hover_cook_button.png");
 
 	mcIdle = iLoadImage("Images//mc_cooking_idle.png");
 	mcHand = iLoadImage("Images//mc_cooking_hand.png");
@@ -72,7 +73,7 @@ void CookingGame::loadImages()
 	failedImg = iLoadImage("Images//failed.png");
 }
 
-void CookingGame::start()
+void CookingGame::start(bool hasPerk)
 {
 	phase = COOKING_PLAYING;
 	timeLeftTicks = COOKING_TIME_LIMIT_TICKS;
@@ -80,6 +81,7 @@ void CookingGame::start()
 	mistakes = 0;
 	finished = false;
 	retryRequested = false;
+	targetDishes = hasPerk ? COOKING_TARGET_DISHES_WITH_PERK : COOKING_TARGET_DISHES;
 	pickNewDish();
 }
 
@@ -138,7 +140,7 @@ void CookingGame::update()
 		if (timeLeftTicks <= 0)
 		{
 			timeLeftTicks = 0;
-			phase = COOKING_SUCCESS;
+			phase = COOKING_FAILED;
 		}
 		return;
 	}
@@ -156,6 +158,11 @@ void CookingGame::update()
 			if (lastAttemptCorrect)
 			{
 				score++;
+				if (score >= targetDishes)
+				{
+					phase = COOKING_SUCCESS;
+					return;
+				}
 			}
 			else
 			{
@@ -233,7 +240,7 @@ void CookingGame::handleClick(int mx, int my)
 	}
 }
 
-void CookingGame::draw()
+void CookingGame::draw(int mouseX, int mouseY)
 {
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, bg);
 
@@ -246,7 +253,13 @@ void CookingGame::draw()
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, timeAndScoreImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ingredientsListImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, neededDishImg);
-	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, cookButtonImg);
+
+	int cbX = (int)(SCREEN_WIDTH * COOK_BUTTON_X);
+	int cbY = (int)(SCREEN_HEIGHT * COOK_BUTTON_Y);
+	int cbW = (int)(SCREEN_WIDTH * COOK_BUTTON_W);
+	int cbH = (int)(SCREEN_HEIGHT * COOK_BUTTON_H);
+	bool hoveringCook = phase == COOKING_PLAYING && isInsideBox(mouseX, mouseY, cbX, cbY, cbW, cbH);
+	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hoveringCook ? cookButtonHoverImg : cookButtonImg);
 
 	int slotSize = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_SIZE);
 	for (int i = 0; i < 7; i++)
@@ -273,10 +286,10 @@ void CookingGame::draw()
 		iShowImage(nx, ny, neededSize, neededSize, ingredientImages[DISH_INGREDIENTS[currentDish][j]]);
 	}
 
-	char timeText[20], scoreText[20];
+	char timeText[20], scoreText[30];
 	int secondsLeft = timeLeftTicks / 100;
 	sprintf_s(timeText, "%02d:%02d", secondsLeft / 60, secondsLeft % 60);
-	sprintf_s(scoreText, "Score: %d", score);
+	sprintf_s(scoreText, "Score: %d Target: %d", score, targetDishes);
 
 	iSetColor(255, 255, 255);
 	iText(SCREEN_WIDTH * TIME_TEXT_X, SCREEN_HEIGHT * TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
@@ -286,5 +299,16 @@ void CookingGame::draw()
 	else if (phase == COOKING_FAILED) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);
 }
 
-bool CookingGame::isFinished() { return finished; }
-bool CookingGame::isRetryRequested() { return retryRequested; }
+bool CookingGame::isFinished()
+{
+	if (!finished) return false;
+	finished = false;
+	return true;
+}
+
+bool CookingGame::isRetryRequested()
+{
+	if (!retryRequested) return false;
+	retryRequested = false;
+	return true;
+}
