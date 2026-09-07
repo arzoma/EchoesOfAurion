@@ -11,6 +11,7 @@
 #include "Map.hpp"
 #include "Npc.hpp"
 #include "DialogueBox.hpp"
+#include "Inventory.hpp"
 #include "CookingGame.hpp"
 #include "ServingGame.hpp"
 
@@ -136,6 +137,11 @@ ServingGame servingGame;
 
 int mouseX = 0;
 int mouseY = 0;
+
+int kingBoxImg;
+int villagerBoxImg;
+int hoodedManBoxImg;
+int restaurantOwnerBoxImg;
 
 int throneStep = 0;  // 0 = king talking, 1 = mc's reply, 2 = moved on
 int hallwayStep = 0; // 0 = mc's lines playing, 1 = "Travel to Emberfall" prompt showing
@@ -287,7 +293,7 @@ void enterThroneRoom()
 	player.init(THRONE_PLAYER_X, THRONE_PLAYER_Y);
 	player.setFacing(DIR_BACK);
 
-	dialogueBox.startDialogue("King", kingLines, KING_LINE_COUNT, false);
+	dialogueBox.startDialogue("King", kingLines, KING_LINE_COUNT, false, kingBoxImg);
 
 	requestFade(THRONE_ROOM);
 }
@@ -971,6 +977,11 @@ int main()
 
 	restaurantNpc.init(RESTAURANT_NPC_X, RESTAURANT_NPC_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Restaurant Owner");
 	restaurantNpc.loadImage("Images//idle_npc_3.png");
+
+	kingBoxImg = iLoadImage("Images//dialogue_box_king.png");
+	villagerBoxImg = iLoadImage("Images//dialogue_box_villager.png");
+	hoodedManBoxImg = iLoadImage("Images//dialogue_box_hooded_man.png");
+	restaurantOwnerBoxImg = iLoadImage("Images//dialogue_box_restaurant_owner.png");
 	
 	iStart();
 	return 0;
