@@ -22,25 +22,28 @@ static const int DISH_INGREDIENTS[5][3] =
 	{ 5, 4, 1 }  // cake: flour, sugar, carrot
 };
 
-static const double TIME_TEXT_X = 0.10, TIME_TEXT_Y = 0.90;
-static const double SCORE_TEXT_X = 0.75, SCORE_TEXT_Y = 0.90;
+static const int TIME_TEXT_X = 128, TIME_TEXT_Y = 648;
+static const int SCORE_TEXT_X = 960, SCORE_TEXT_Y = 648;
+static const int MISTAKES_TEXT_X = 960, MISTAKES_TEXT_Y = 578;
 
-static const double DISH_ICON_X = 0.29, DISH_ICON_Y = 0.62, DISH_ICON_SIZE = 0.11;
+static const int DISH_ICON_X = 371, DISH_ICON_Y = 446, DISH_ICON_SIZE = 141;
 
-static const double NEEDED_SLOT_X[3] = { 0.215, 0.275, 0.335 };
-static const double NEEDED_SLOT_Y = 0.48;
-static const double NEEDED_SLOT_SIZE = 0.045;
+static const int NEEDED_SLOT_X[3] = { 275, 352, 429 };
+static const int NEEDED_SLOT_Y = 346;
+static const int NEEDED_SLOT_SIZE = 58;
 
-static const double INGREDIENT_SLOT_X[7] = { 0.078, 0.175, 0.272, 0.369, 0.466, 0.563, 0.660 };
-static const double INGREDIENT_SLOT_Y = 0.26;
-static const double INGREDIENT_SLOT_SIZE = 0.065;
+static const int INGREDIENT_SLOT_X[7] = { 100, 224, 348, 472, 596, 721, 845 };
+static const int INGREDIENT_SLOT_Y = 187;
+static const int INGREDIENT_SLOT_SIZE = 83;
 
-static const double COOK_BUTTON_X = 0.585, COOK_BUTTON_Y = 0.076, COOK_BUTTON_W = 0.12, COOK_BUTTON_H = 0.06;
+static const int COOK_BUTTON_X = 749, COOK_BUTTON_Y = 55;
+static const int COOK_BUTTON_W = 154, COOK_BUTTON_H = 43;
 
-static const double MC_X = 0.72, MC_Y = 0.15, MC_W = 0.22, MC_H = 0.60;
-static const double POT_X = 0.735, POT_Y = 0.18, POT_SIZE = 0.13;
+static const int MC_X = 922, MC_Y = 108, MC_W = 282, MC_H = 432;
+static const int POT_X = 941, POT_Y = 130, POT_SIZE = 166;
 
-static const double RESULT_BUTTON_X = 0.40, RESULT_BUTTON_Y = 0.30, RESULT_BUTTON_W = 0.20, RESULT_BUTTON_H = 0.08;
+static const int RESULT_BUTTON_X = 512, RESULT_BUTTON_Y = 216;
+static const int RESULT_BUTTON_W = 256, RESULT_BUTTON_H = 58;
 
 void CookingGame::loadImages()
 {
@@ -82,6 +85,11 @@ void CookingGame::start(bool hasPerk)
 	finished = false;
 	retryRequested = false;
 	targetDishes = hasPerk ? COOKING_TARGET_DISHES_WITH_PERK : COOKING_TARGET_DISHES;
+
+	animTimer = 0;
+	animFrame = 0;
+	lastAttemptCorrect = false;
+
 	pickNewDish();
 }
 
@@ -117,14 +125,14 @@ bool CookingGame::checkSelection()
 
 void CookingGame::getIngredientSlotPos(int i, int &x, int &y)
 {
-	x = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_X[i]);
-	y = (int)(SCREEN_HEIGHT * INGREDIENT_SLOT_Y);
+	x = INGREDIENT_SLOT_X[i];
+	y = INGREDIENT_SLOT_Y;
 }
 
 void CookingGame::getNeededSlotPos(int j, int &x, int &y)
 {
-	x = (int)(SCREEN_WIDTH * NEEDED_SLOT_X[j]);
-	y = (int)(SCREEN_HEIGHT * NEEDED_SLOT_Y);
+	x = NEEDED_SLOT_X[j];
+	y = NEEDED_SLOT_Y;
 }
 
 bool CookingGame::isInsideBox(int mx, int my, int bx, int by, int bw, int bh)
@@ -182,20 +190,22 @@ void CookingGame::update()
 
 void CookingGame::handleClick(int mx, int my)
 {
-	int rx = (int)(SCREEN_WIDTH * RESULT_BUTTON_X);
-	int ry = (int)(SCREEN_HEIGHT * RESULT_BUTTON_Y);
-	int rw = (int)(SCREEN_WIDTH * RESULT_BUTTON_W);
-	int rh = (int)(SCREEN_HEIGHT * RESULT_BUTTON_H);
 
 	if (phase == COOKING_SUCCESS)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) finished = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{
+			finished = true;
+		}
 		return;
 	}
 
 	if (phase == COOKING_FAILED)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) retryRequested = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{	
+			retryRequested = true;
+		}
 		return;
 	}
 
@@ -204,13 +214,12 @@ void CookingGame::handleClick(int mx, int my)
 		return;
 	}
 
-	int slotSize = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_SIZE);
 	for (int i = 0; i < 7; i++)
 	{
 		int sx, sy;
 		getIngredientSlotPos(i, sx, sy);
 
-		if (isInsideBox(mx, my, sx, sy, slotSize, slotSize))
+		if (isInsideBox(mx, my, sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE))
 		{
 			if (selected[i])
 			{
@@ -226,12 +235,7 @@ void CookingGame::handleClick(int mx, int my)
 		}
 	}
 
-	int cbX = (int)(SCREEN_WIDTH * COOK_BUTTON_X);
-	int cbY = (int)(SCREEN_HEIGHT * COOK_BUTTON_Y);
-	int cbW = (int)(SCREEN_WIDTH * COOK_BUTTON_W);
-	int cbH = (int)(SCREEN_HEIGHT * COOK_BUTTON_H);
-
-	if (isInsideBox(mx, my, cbX, cbY, cbW, cbH) && selectedCount == 3)
+	if (isInsideBox(mx, my, COOK_BUTTON_X, COOK_BUTTON_Y, COOK_BUTTON_W, COOK_BUTTON_H) && selectedCount == 3)
 	{
 		lastAttemptCorrect = checkSelection();
 		phase = COOKING_ANIM;
@@ -245,55 +249,48 @@ void CookingGame::draw(int mouseX, int mouseY)
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, bg);
 
 	int mcImg = (phase == COOKING_ANIM && animFrame == 1) ? mcHand : mcIdle;
-	iShowImage((int)(SCREEN_WIDTH * MC_X), (int)(SCREEN_HEIGHT * MC_Y),
-		(int)(SCREEN_WIDTH * MC_W), (int)(SCREEN_HEIGHT * MC_H), mcImg);
-	iShowImage((int)(SCREEN_WIDTH * POT_X), (int)(SCREEN_HEIGHT * POT_Y),
-		(int)(SCREEN_WIDTH * POT_SIZE), (int)(SCREEN_WIDTH * POT_SIZE), pot);
+	iShowImage(MC_X, MC_Y, MC_W, MC_H, mcImg);
+	iShowImage(POT_X, POT_Y, POT_SIZE, POT_SIZE, pot);
 
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, timeAndScoreImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ingredientsListImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, neededDishImg);
 
-	int cbX = (int)(SCREEN_WIDTH * COOK_BUTTON_X);
-	int cbY = (int)(SCREEN_HEIGHT * COOK_BUTTON_Y);
-	int cbW = (int)(SCREEN_WIDTH * COOK_BUTTON_W);
-	int cbH = (int)(SCREEN_HEIGHT * COOK_BUTTON_H);
-	bool hoveringCook = phase == COOKING_PLAYING && isInsideBox(mouseX, mouseY, cbX, cbY, cbW, cbH);
+	bool hoveringCook = phase == COOKING_PLAYING && isInsideBox(mouseX, mouseY, COOK_BUTTON_X, COOK_BUTTON_Y, COOK_BUTTON_W, COOK_BUTTON_H);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hoveringCook ? cookButtonHoverImg : cookButtonImg);
 
-	int slotSize = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_SIZE);
 	for (int i = 0; i < 7; i++)
 	{
 		int sx, sy;
 		getIngredientSlotPos(i, sx, sy);
-		iShowImage(sx, sy, slotSize, slotSize, ingredientImages[i]);
+		iShowImage(sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE, ingredientImages[i]);
 
 		if (selected[i])
 		{
 			iSetColor(255, 255, 255);
-			iRectangle(sx, sy, slotSize, slotSize);
+			iRectangle(sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE);
 		}
 	}
 
-	iShowImage((int)(SCREEN_WIDTH * DISH_ICON_X), (int)(SCREEN_HEIGHT * DISH_ICON_Y),
-		(int)(SCREEN_WIDTH * DISH_ICON_SIZE), (int)(SCREEN_WIDTH * DISH_ICON_SIZE), dishImages[currentDish]);
+	iShowImage(DISH_ICON_X, DISH_ICON_Y, DISH_ICON_SIZE, DISH_ICON_SIZE, dishImages[currentDish]);
 
-	int neededSize = (int)(SCREEN_WIDTH * NEEDED_SLOT_SIZE);
 	for (int j = 0; j < 3; j++)
 	{
 		int nx, ny;
 		getNeededSlotPos(j, nx, ny);
-		iShowImage(nx, ny, neededSize, neededSize, ingredientImages[DISH_INGREDIENTS[currentDish][j]]);
+		iShowImage(nx, ny, NEEDED_SLOT_SIZE, NEEDED_SLOT_SIZE, ingredientImages[DISH_INGREDIENTS[currentDish][j]]);
 	}
 
-	char timeText[20], scoreText[30];
+	char timeText[20], scoreText[50], mistakeText[50];
 	int secondsLeft = timeLeftTicks / 100;
 	sprintf_s(timeText, "%02d:%02d", secondsLeft / 60, secondsLeft % 60);
 	sprintf_s(scoreText, "Score: %d Target: %d", score, targetDishes);
+	sprintf_s(mistakeText, "Mistakes: %d/%d", mistakes, COOKING_MAX_MISTAKES);
 
 	iSetColor(255, 255, 255);
-	iText(SCREEN_WIDTH * TIME_TEXT_X, SCREEN_HEIGHT * TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
-	iText(SCREEN_WIDTH * SCORE_TEXT_X, SCREEN_HEIGHT * SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
+	iText(TIME_TEXT_X, TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
+	iText(SCORE_TEXT_X, SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
+	iText(MISTAKES_TEXT_X, MISTAKES_TEXT_Y, mistakeText, GLUT_BITMAP_HELVETICA_18);
 
 	if (phase == COOKING_SUCCESS) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, successImg);
 	else if (phase == COOKING_FAILED) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);

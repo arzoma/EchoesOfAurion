@@ -15,6 +15,9 @@ const int PLAYER_WIDTH = 90;
 const int PLAYER_HEIGHT = 120;
 const int PLAYER_SPEED = 3;
 
+const int PLAYER_FEET_W = 40;
+const int PLAYER_FEET_H = 24;
+
 class Player
 {
 
@@ -53,6 +56,8 @@ private:
 	int blinkState;
 	int blinkTimer;
 
+	Rect feetRectAt(int px, int py);
+
 public:
 
 	void init(int startX, int startY);
@@ -69,6 +74,7 @@ public:
 	int getX();
 	int getY();
 	Rect getRect();
+	Rect getFeetRect();
 
 };
 

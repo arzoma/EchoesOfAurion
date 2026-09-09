@@ -65,8 +65,10 @@
     <ClCompile Include="Cookinggame.cpp" />
     <ClCompile Include="Credits.cpp" />
     <ClCompile Include="Dialoguebox.cpp" />
+    <ClCompile Include="Foresttrail.cpp" />
     <ClCompile Include="iMain.cpp" />
     <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="Itemobtained.cpp" />
     <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Nameinput.cpp" />
@@ -80,7 +82,9 @@
     <ClInclude Include="Cookinggame.hpp" />
     <ClInclude Include="Credits.hpp" />
     <ClInclude Include="Dialoguebox.hpp" />
+    <ClInclude Include="Foresttrail.hpp" />
     <ClInclude Include="Inventory.hpp" />
+    <ClInclude Include="Itemobtained.hpp" />
     <ClInclude Include="MainMenu.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="Nameinput.hpp" />

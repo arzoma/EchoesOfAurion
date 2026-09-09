@@ -17,18 +17,32 @@ void Map::init(char imagePath[], int worldWidth, int worldHeight, bool isScrolla
 	cameraY = 0;
 }
 
-void Map::addObstacle(int obsX, int obsY, int obsW, int obsH)
+int Map::addObstacle(int obsX, int obsY, int obsW, int obsH)
 {
 	if (obstacleCount >= MAX_OBSTACLES)
 	{
-		return;
+		return -1;
 	}
 
 	obstacles[obstacleCount].x = obsX;
 	obstacles[obstacleCount].y = obsY;
 	obstacles[obstacleCount].w = obsW;
 	obstacles[obstacleCount].h = obsH;
+	obstacleActive[obstacleCount] = true;
 	obstacleCount++;
+
+	return obstacleCount - 1;
+}
+
+void Map::setObstacleActive(int index, bool on)
+{
+	if (index < 0 || index >= obstacleCount) return;
+	obstacleActive[index] = on;
+}
+
+void Map::clearObstacles()
+{
+	obstacleCount = 0;
 }
 
 void Map::updateCamera(int playerX, int playerY, int playerWidth, int playerHeight)
@@ -60,6 +74,8 @@ bool Map::isBlocked(Rect targetRect)
 
 	for (int i = 0; i < obstacleCount; i++)
 	{
+		if (!obstacleActive[i]) continue;
+		
 		Rect o = obstacles[i];
 
 		bool overlap = targetRect.x < o.x + o.w && targetRect.x + targetRect.w > o.x &&

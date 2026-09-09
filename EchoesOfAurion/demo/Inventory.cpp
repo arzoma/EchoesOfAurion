@@ -11,7 +11,7 @@ void iText(double x, double y, char *str, void *font);
 
 const int ICON_X = 1180, ICON_Y = 630, ICON_SIZE = 70;
 
-const int SLOT_X0 = 260, SLOT_X1 = 350;
+const int SLOT_X0 = 260, SLOT_X1 = 350, SLOT_X2 = 440;
 const int SLOT_Y = 445;
 const int SLOT_SIZE = 64;
 
@@ -28,6 +28,8 @@ void Inventory::loadImages()
 
 	pendantIcon = iLoadImage("Images//pendant.png");
 	hoodedGiftIcon = iLoadImage("Images//pendant.png"); // placeholder
+	compassIcon = iLoadImage("Images//forest_compass.png");
+	hasCompass = false;
 
 	hasPendant = false;
 	hasHoodedGift = false;
@@ -43,6 +45,24 @@ void Inventory::givePendant()
 void Inventory::giveHoodedGift()
 {
 	hasHoodedGift = true;
+}
+
+void Inventory::giveCompass()  
+{
+	hasCompass = true;
+}
+bool Inventory::getHasCompass()
+{
+	return hasCompass;
+}
+int  Inventory::getCompassIcon()
+{
+	return compassIcon;
+}
+
+int Inventory::getHoodedGiftIcon()
+{
+	return hoodedGiftIcon;
 }
 
 bool Inventory::getIsOpen()
@@ -73,6 +93,11 @@ bool Inventory::handleClick(int mx, int my)
 		if (hasHoodedGift && isInsideBox(mx, my, SLOT_X1, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 2;
+		}
+
+		if (hasCompass && isInsideBox(mx, my, SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		{
+			selectedItem = 3;
 		}
 
 		return true;
@@ -109,10 +134,18 @@ void Inventory::draw(int mouseX, int mouseY)
 		iShowImage(SLOT_X1, SLOT_Y, SLOT_SIZE, SLOT_SIZE, hoodedGiftIcon);
 	}
 
+	if (hasCompass)
+	{
+		iShowImage(SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE, compassIcon);
+	}
+
 	if (selectedItem != 0)
 	{
-		int previewIcon = (selectedItem == 1) ? pendantIcon : hoodedGiftIcon;
-		char* name = (selectedItem == 1) ? "Guardian's Pendant" : "Hooded Man's Gift";
+		int previewIcon = pendantIcon;
+		char* name = "Guardian's Pendant";
+
+		if (selectedItem == 2) { previewIcon = hoodedGiftIcon; name = "Hearth Ember"; }
+		else if (selectedItem == 3) { previewIcon = compassIcon; name = "Forest Compass"; }
 
 		iShowImage(PREVIEW_X, PREVIEW_Y, PREVIEW_SIZE, PREVIEW_SIZE, previewIcon);
 

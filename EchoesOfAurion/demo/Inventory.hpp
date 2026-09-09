@@ -12,9 +12,11 @@ private:
 
 	int pendantIcon;
 	int hoodedGiftIcon; // placeholder
+	int compassIcon;
 
 	bool hasPendant;
 	bool hasHoodedGift;
+	bool hasCompass;
 
 	int selectedItem; // 0 = none, 1 = pendant, 2 = hooded gift
 	bool isOpen;
@@ -27,6 +29,12 @@ public:
 
 	void givePendant();
 	void giveHoodedGift();
+
+	void giveCompass();
+	bool getHasCompass();
+	int  getCompassIcon();
+
+	int getHoodedGiftIcon();
 
 	bool getIsOpen();
 

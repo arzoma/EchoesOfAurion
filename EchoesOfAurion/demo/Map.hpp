@@ -19,6 +19,7 @@ private:
 	bool scrollable;
 
 	Rect obstacles[MAX_OBSTACLES];
+	bool obstacleActive[MAX_OBSTACLES];
 	int obstacleCount;
 
 	int cameraX;
@@ -28,7 +29,9 @@ public:
 
 	void init(char imagePath[], int worldWidth, int worldHeight, bool isScrollable);
 
-	void addObstacle(int obsX, int obsY, int obsW, int obsH);
+	int  addObstacle(int obsX, int obsY, int obsW, int obsH);
+	void setObstacleActive(int index, bool on);
+	void clearObstacles();
 
 	void updateCamera(int playerX, int playerY, int playerWidth, int playerHeight);
 

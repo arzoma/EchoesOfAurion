@@ -13,27 +13,29 @@ void iFilledRectangle(double x, double y, double width, double height);
 
 // dish order: 0=soup, 1=grilled_meat, 2=bread, 3=pie, 4=cake
 
-static const double SEAT_X[3] = { 0.14, 0.36, 0.58 };
-static const double SEAT_Y = 0.05;
-static const double NPC_W = 0.10, NPC_H = 0.45;
+static const int SEAT_X[3] = { 179, 461, 742 };
+static const int SEAT_Y = 36;
+static const int NPC_W = 128, NPC_H = 324;
 
-static const double BUBBLE_OFFSET_X = 0.02, BUBBLE_OFFSET_Y = 0.42, BUBBLE_SIZE = 0.09;
-static const double BUBBLE_ICON_INSET = 0.02, BUBBLE_ICON_SIZE = 0.05;
+static const int BUBBLE_OFFSET_X = 26, BUBBLE_OFFSET_Y = 302, BUBBLE_SIZE = 115;
+static const int BUBBLE_ICON_INSET = 26, BUBBLE_ICON_SIZE = 64;
 
-static const double PATIENCE_OFFSET_Y = 0.36;
-static const double PATIENCE_W = 0.09, PATIENCE_H = 0.015;
+static const int PATIENCE_OFFSET_Y = 259;
+static const int PATIENCE_W = 115, PATIENCE_H = 11;
 
-static const double MC_HOME_X = 0.80, MC_Y = 0.05, MC_W = 0.12, MC_H = 0.50;
-static const double TRAY_OFFSET_X = 0.02, TRAY_OFFSET_Y = 0.30, TRAY_ICON_SIZE = 0.04;
+static const int MC_HOME_X = 1024, MC_Y = 36, MC_W = 154, MC_H = 360;
+static const int TRAY_OFFSET_X = 26, TRAY_OFFSET_Y = 216, TRAY_ICON_SIZE = 51;
 
-static const double DISH_SLOT_X[5] = { 0.10, 0.22, 0.34, 0.46, 0.58 };
-static const double DISH_SLOT_Y = 0.10;
-static const double DISH_SLOT_SIZE = 0.07;
+static const int DISH_SLOT_X[5] = { 128, 282, 435, 589, 742 };
+static const int DISH_SLOT_Y = 72;
+static const int DISH_SLOT_SIZE = 90;
 
-static const double TIME_TEXT_X = 0.10, TIME_TEXT_Y = 0.90;
-static const double SCORE_TEXT_X = 0.75, SCORE_TEXT_Y = 0.90;
+static const int TIME_TEXT_X = 128, TIME_TEXT_Y = 648;
+static const int SCORE_TEXT_X = 960, SCORE_TEXT_Y = 648;
+static const int MISTAKES_TEXT_X = 960, MISTAKES_TEXT_Y = 578;
 
-static const double RESULT_BUTTON_X = 0.40, RESULT_BUTTON_Y = 0.30, RESULT_BUTTON_W = 0.20, RESULT_BUTTON_H = 0.08;
+static const int RESULT_BUTTON_X = 512, RESULT_BUTTON_Y = 216;
+static const int RESULT_BUTTON_W = 256, RESULT_BUTTON_H = 58;
 
 static const double CUSTOMER_WALK_SPEED = 3.0;
 static const double MC_WALK_SPEED = 4.0;
@@ -79,9 +81,12 @@ void ServingGame::start(bool hasPerk)
 	targetCustomers = hasPerk ? SERVING_TARGET_CUSTOMERS_WITH_PERK : SERVING_TARGET_CUSTOMERS;
 
 	trayDish = -1;
-	mcX = SCREEN_WIDTH * MC_HOME_X;
+	mcX = MC_HOME_X;
 	mcMoving = false;
+	mcMovingRight = false;
 	mcTargetSeat = -1;
+	mcWalkFrame = 0;
+	mcWalkFrameTimer = 0;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -102,7 +107,7 @@ void ServingGame::registerMistake()
 void ServingGame::updateCustomer(int i)
 {
 	Customer &c = customers[i];
-	double seatX = SCREEN_WIDTH * SEAT_X[i];
+	double seatX = SEAT_X[i];
 
 	switch (c.state)
 	{
@@ -159,7 +164,7 @@ void ServingGame::updateMcMovement()
 {
 	if (!mcMoving) return;
 
-	double targetX = (mcTargetSeat == -1) ? SCREEN_WIDTH * MC_HOME_X : SCREEN_WIDTH * SEAT_X[mcTargetSeat];
+	double targetX = (mcTargetSeat == -1) ? MC_HOME_X : SEAT_X[mcTargetSeat];
 
 	if (mcX < targetX)
 	{
@@ -201,7 +206,7 @@ void ServingGame::updateMcMovement()
 			mcTargetSeat = -1;
 
 			mcMoving = true;
-			mcMovingRight = (SCREEN_WIDTH * MC_HOME_X > mcX);
+			mcMovingRight = (MC_HOME_X > mcX);
 		}
 	}
 }
@@ -229,35 +234,36 @@ bool ServingGame::isInsideBox(int mx, int my, int bx, int by, int bw, int bh)
 
 void ServingGame::getDishSlotPos(int i, int &x, int &y)
 {
-	x = (int)(SCREEN_WIDTH * DISH_SLOT_X[i]);
-	y = (int)(SCREEN_HEIGHT * DISH_SLOT_Y);
+	x = DISH_SLOT_X[i];
+	y = DISH_SLOT_Y;
 }
 
 void ServingGame::handleClick(int mx, int my)
 {
-	int rx = (int)(SCREEN_WIDTH * RESULT_BUTTON_X);
-	int ry = (int)(SCREEN_HEIGHT * RESULT_BUTTON_Y);
-	int rw = (int)(SCREEN_WIDTH * RESULT_BUTTON_W);
-	int rh = (int)(SCREEN_HEIGHT * RESULT_BUTTON_H);
 
 	if (phase == SERVING_SUCCESS)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) finished = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{
+			finished = true;
+		}
 		return;
 	}
 
 	if (phase == SERVING_FAILED)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) retryRequested = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{
+			retryRequested = true;
+		}
 		return;
 	}
 
-	int dishSize = (int)(SCREEN_WIDTH * DISH_SLOT_SIZE);
 	for (int i = 0; i < 5; i++)
 	{
 		int sx, sy;
 		getDishSlotPos(i, sx, sy);
-		if (isInsideBox(mx, my, sx, sy, dishSize, dishSize))
+		if (isInsideBox(mx, my, sx, sy, DISH_SLOT_SIZE, DISH_SLOT_SIZE))
 		{
 			trayDish = i;
 			return;
@@ -266,19 +272,15 @@ void ServingGame::handleClick(int mx, int my)
 
 	if (trayDish != -1 && !mcMoving)
 	{
-		int npcW = (int)(SCREEN_WIDTH * NPC_W);
-		int npcH = (int)(SCREEN_HEIGHT * NPC_H);
-		int npcY = (int)(SCREEN_HEIGHT * SEAT_Y);
-
 		for (int i = 0; i < 3; i++)
 		{
 			if (customers[i].state != CUST_SEATED) continue;
 
-			if (isInsideBox(mx, my, (int)customers[i].x, npcY, npcW, npcH))
+			if (isInsideBox(mx, my, (int)customers[i].x, SEAT_Y, NPC_W, NPC_H))
 			{
 				mcMoving = true;
 				mcTargetSeat = i;
-				mcMovingRight = (SCREEN_WIDTH * SEAT_X[i] > mcX);
+				mcMovingRight = (SEAT_X[i] > mcX);
 				return;
 			}
 		}
@@ -288,10 +290,6 @@ void ServingGame::handleClick(int mx, int my)
 void ServingGame::draw()
 {
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, bg);
-
-	int npcW = (int)(SCREEN_WIDTH * NPC_W);
-	int npcH = (int)(SCREEN_HEIGHT * NPC_H);
-	int npcY = (int)(SCREEN_HEIGHT * SEAT_Y);
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -303,30 +301,25 @@ void ServingGame::draw()
 		else if (c.state == CUST_WALK_OUT) img = rnpcWalkLeft;
 		else img = rnpcSit;
 
-		iShowImage((int)c.x, npcY, npcW, npcH, img);
+		iShowImage((int)c.x, SEAT_Y, NPC_W, NPC_H, img);
 
 		if (c.state == CUST_SEATED)
 		{
-			int bx = (int)c.x + (int)(SCREEN_WIDTH * BUBBLE_OFFSET_X);
-			int by = npcY + (int)(SCREEN_HEIGHT * BUBBLE_OFFSET_Y);
-			int bSize = (int)(SCREEN_WIDTH * BUBBLE_SIZE);
-			iShowImage(bx, by, bSize, bSize, orderBubble);
+			int bx = (int)c.x + BUBBLE_OFFSET_X;
+			int by = SEAT_Y + BUBBLE_OFFSET_Y;
+			iShowImage(bx, by, BUBBLE_SIZE, BUBBLE_SIZE, orderBubble);
 
-			int iconInset = (int)(SCREEN_WIDTH * BUBBLE_ICON_INSET);
-			int iconSize = (int)(SCREEN_WIDTH * BUBBLE_ICON_SIZE);
-			iShowImage(bx + iconInset, by + iconInset, iconSize, iconSize, dishImages[c.orderDish]);
+			iShowImage(bx + BUBBLE_ICON_INSET, by + BUBBLE_ICON_INSET, BUBBLE_ICON_SIZE, BUBBLE_ICON_SIZE, dishImages[c.orderDish]);
 
 			double pct = (double)c.patienceTicks / c.patienceMax;
 			int barX = (int)c.x;
-			int barY = npcY + (int)(SCREEN_HEIGHT * PATIENCE_OFFSET_Y);
-			int barW = (int)(SCREEN_WIDTH * PATIENCE_W);
-			int barH = (int)(SCREEN_HEIGHT * PATIENCE_H);
+			int barY = SEAT_Y + (int)(SCREEN_HEIGHT * PATIENCE_OFFSET_Y);
 
 			iSetColor(80, 80, 80);
-			iFilledRectangle(barX, barY, barW, barH);
+			iFilledRectangle(barX, barY, PATIENCE_W, PATIENCE_H);
 
 			iSetColor(255, 255, 255);
-			iFilledRectangle(barX, barY, (int)(barW * pct), barH);
+			iFilledRectangle(barX, barY, (int)(PATIENCE_W * pct), PATIENCE_H);
 		}
 	}
 
@@ -337,7 +330,7 @@ void ServingGame::draw()
 		{
 			if (mcWalkFrame == 0) mcImg = mcWalkRight1;
 			else if (mcWalkFrame == 2) mcImg = mcWalkRight3;
-			else mcImg = mcWalkRight2; // frame 1 or 3 - the middle pose
+			else mcImg = mcWalkRight2;
 		}
 		else
 		{
@@ -346,38 +339,34 @@ void ServingGame::draw()
 			else mcImg = mcWalkLeft2;
 		}
 	}
-	int mcW = (int)(SCREEN_WIDTH * MC_W);
-	int mcH = (int)(SCREEN_HEIGHT * MC_H);
-	int mcYpx = (int)(SCREEN_HEIGHT * MC_Y);
-	iShowImage((int)mcX, mcYpx, mcW, mcH, mcImg);
+	iShowImage((int)mcX, MC_Y, MC_W, MC_H, mcImg);
 
 	if (trayDish != -1)
 	{
-		int trayX = (int)mcX + (int)(SCREEN_WIDTH * TRAY_OFFSET_X);
-		int trayY = mcYpx + (int)(SCREEN_HEIGHT * TRAY_OFFSET_Y);
-		int traySize = (int)(SCREEN_WIDTH * TRAY_ICON_SIZE);
-		iShowImage(trayX, trayY, traySize, traySize, dishImages[trayDish]);
+		int trayX = (int)mcX + TRAY_OFFSET_X;
+		int trayY = MC_Y + (int)(SCREEN_HEIGHT * TRAY_OFFSET_Y);
+		iShowImage(trayX, trayY, TRAY_ICON_SIZE, TRAY_ICON_SIZE, dishImages[trayDish]);
 	}
 
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, dishListImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, timeAndScoreImg);
 
-	int dishSize = (int)(SCREEN_WIDTH * DISH_SLOT_SIZE);
 	for (int i = 0; i < 5; i++)
 	{
 		int sx, sy;
 		getDishSlotPos(i, sx, sy);
-		iShowImage(sx, sy, dishSize, dishSize, dishImages[i]);
+		iShowImage(sx, sy, DISH_SLOT_SIZE, DISH_SLOT_SIZE, dishImages[i]);
 	}
 
-	char timeText[20], scoreText[20];
+	char timeText[20], scoreText[50], mistakeText[50];
 	int secondsLeft = timeLeftTicks / 100;
 	sprintf_s(timeText, "%02d:%02d", secondsLeft / 60, secondsLeft % 60);
 	sprintf_s(scoreText, "Score: %d Target: %d", score, targetCustomers);
+	sprintf_s(mistakeText, "Mistakes: %d/%d", mistakes, SERVING_MAX_MISTAKES);
 
 	iSetColor(255, 255, 255);
-	iText(SCREEN_WIDTH * TIME_TEXT_X, SCREEN_HEIGHT * TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
-	iText(SCREEN_WIDTH * SCORE_TEXT_X, SCREEN_HEIGHT * SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
+	iText(TIME_TEXT_X, TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
+	iText(SCORE_TEXT_X, SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
 
 	if (phase == SERVING_SUCCESS) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, successImg);
 	else if (phase == SERVING_FAILED) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);

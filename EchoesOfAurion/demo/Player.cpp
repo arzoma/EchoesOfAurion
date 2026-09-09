@@ -76,14 +76,12 @@ void Player::handleInput(bool up, bool down, bool left, bool right, Map &current
 		return;
 	}
 
-	Rect nextX = { x + dx, y, PLAYER_WIDTH, PLAYER_HEIGHT };
-	if (!currentMap.isBlocked(nextX))
+	if (!currentMap.isBlocked(feetRectAt(x + dx, y)))
 	{
 		x += dx;
 	}
 
-	Rect nextY = { x, y + dy, PLAYER_WIDTH, PLAYER_HEIGHT };
-	if (!currentMap.isBlocked(nextY))
+	if (!currentMap.isBlocked(feetRectAt(x, y + dy)))
 	{
 		y += dy;
 	}
@@ -194,4 +192,19 @@ Rect Player::getRect()
 {
 	Rect r = { x, y, PLAYER_WIDTH, PLAYER_HEIGHT };
 	return r;
+}
+
+Rect Player::feetRectAt(int px, int py)
+{
+	Rect r;
+	r.x = px + (PLAYER_WIDTH - PLAYER_FEET_W) / 2;
+	r.y = py;
+	r.w = PLAYER_FEET_W;
+	r.h = PLAYER_FEET_H;
+	return r;
+}
+
+Rect Player::getFeetRect()
+{
+	return feetRectAt(x, y);
 }

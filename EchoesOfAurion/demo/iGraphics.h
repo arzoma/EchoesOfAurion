@@ -20,6 +20,8 @@
 # include "stb_image.h"
 
 int iScreenHeight, iScreenWidth;
+float g_imgAlpha = 1.0f;
+bool  g_imgAdditive = false;
 int iMouseX, iMouseY;
 int ifft=0;
 void (*iAnimFunction[10])(void)={0};
@@ -177,7 +179,8 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 	glEnable(GL_TEXTURE_2D);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, g_imgAdditive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 1.0f, 1.0f, g_imgAlpha);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
 
