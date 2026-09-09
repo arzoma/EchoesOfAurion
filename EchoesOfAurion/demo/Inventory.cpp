@@ -15,10 +15,10 @@ const int SLOT_X0 = 260, SLOT_X1 = 350, SLOT_X2 = 440;
 const int SLOT_Y = 445;
 const int SLOT_SIZE = 64;
 
-const int PREVIEW_X = 665, PREVIEW_Y = 300, PREVIEW_SIZE = 360;
-const int NAME_TEXT_X = 768, NAME_TEXT_Y = 266;
+const int PREVIEW_X = 665, PREVIEW_Y = 170, PREVIEW_SIZE = 360;
+const int NAME_TEXT_X = 768, NAME_TEXT_Y = 150;
 
-const int CLOSE_X = 1088, CLOSE_Y = 612, CLOSE_SIZE = 64;
+const int CLOSE_X = 1088, CLOSE_Y = 560, CLOSE_SIZE = 64;
 
 void Inventory::loadImages()
 {
