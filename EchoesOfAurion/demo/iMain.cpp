@@ -124,11 +124,11 @@ const int THRONE_PLAYER_X = 595, THRONE_PLAYER_Y = 150;
 const int HALLWAY_PLAYER_X = 595, HALLWAY_PLAYER_Y = 300;
 const int VILLAGE_SPAWN_X = 1000, VILLAGE_SPAWN_Y = 400;
 
-const int RESTAURANT_PLAYER_X = 100;
+const int RESTAURANT_PLAYER_X = 250;
 const int RESTAURANT_PLAYER_Y = 100;
 
 const int RESTAURANT_NPC_X = 500;
-const int RESTAURANT_NPC_Y = 250;
+const int RESTAURANT_NPC_Y = 350;
 
 const int RESTAURANT_DOOR_X = 2026;
 const int RESTAURANT_DOOR_Y = 1348;
@@ -712,42 +712,35 @@ void iKeyboard(unsigned char key)
 
 void fixedUpdate()
 {
-	if (currentState != VILLAGE)
+	if (currentState == VILLAGE)
 	{
-		return;
-	}
 
-	bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
-	bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
-	bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
-	bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
 
-	player.handleInput(up, down, left, right, villageMap);
+		player.handleInput(up, down, left, right, villageMap);
 
-	Rect restaurantTrigger =
-	{
-		RESTAURANT_TRIGGER_X,
-		RESTAURANT_TRIGGER_Y,
-		RESTAURANT_TRIGGER_W,
-		RESTAURANT_TRIGGER_H
-	};
+		Rect restaurantTrigger =
+		{
+			RESTAURANT_TRIGGER_X,
+			RESTAURANT_TRIGGER_Y,
+			RESTAURANT_TRIGGER_W,
+			RESTAURANT_TRIGGER_H
+		};
 
 
-	if (
-		rectanglesOverlap(
-		player.getRect(),
-		restaurantTrigger
-		)
-		)
-	{
-		enterRestaurant();
+		if (rectanglesOverlap(player.getRect(), restaurantTrigger))
+		{
+			enterRestaurant();
+		}
 
 		return;
+
 	}
 
-	return;
-
-	if (currentState == RESTAURANT)
+	/*if (currentState == RESTAURANT)
 	{
 
 		if (dialogueBox.isActive())
@@ -786,7 +779,7 @@ void fixedUpdate()
 
 
 		return;
-	}
+	}*/
 
 	if (currentState == COOKING_GAME)
 	{
