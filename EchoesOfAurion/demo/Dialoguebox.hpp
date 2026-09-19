@@ -27,6 +27,10 @@ private:
 	char optionText1[100];
 	char optionText2[100];
 
+	int revealChars;
+	int lineTotalChars;
+	int typeTimer;
+
 public:
 
 	void loadImages();
@@ -38,6 +42,11 @@ public:
 	void startOptions(char option1[], char option2[]);
 	bool isShowingOptions();
 	int checkOptionClick(int mx, int my);
+
+	void update();
+	bool isTyping();
+	void finishTyping();
+	void close();
 
 	void draw(int mouseX, int mouseY);
 

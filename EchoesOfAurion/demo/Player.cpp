@@ -13,6 +13,7 @@ void Player::init(int startX, int startY)
 
 	walkFrame = 0;
 	walkTimer = 0;
+	speedAcc = 0;
 
 	blinkState = 0;
 	blinkTimer = 300;
@@ -47,25 +48,29 @@ void Player::handleInput(bool up, bool down, bool left, bool right, Map &current
 	int dx = 0;
 	int dy = 0;
 
+	speedAcc += PLAYER_SPEED_X100;
+	int step = speedAcc / 100;
+	speedAcc = speedAcc % 100;
+
 	if (up)
 	{
-		dy = PLAYER_SPEED;
+		dy = step;
 		facing = DIR_BACK;
 	}
 	else if (down)
 	{
-		dy = -PLAYER_SPEED;
+		dy = -step;
 		facing = DIR_FRONT;
 	}
 
 	if (left)
 	{
-		dx = -PLAYER_SPEED;
+		dx = -step;
 		facing = DIR_LEFT;
 	}
 	else if (right)
 	{
-		dx = PLAYER_SPEED;
+		dx = step;
 		facing = DIR_RIGHT;
 	}
 
@@ -92,7 +97,7 @@ void Player::updateAnimation()
 	if (moving)
 	{
 		walkTimer++;
-		if (walkTimer >= 15)
+		if (walkTimer >= 18)
 		{
 			walkTimer = 0;
 			walkFrame = (walkFrame + 1) % 4;
@@ -147,7 +152,10 @@ void Player::draw(int cameraX, int cameraY)
 		switch (facing)
 		{
 		case DIR_BACK:
-			image = (walkFrame == 0) ? walkBack1 : walkBack2;  break;
+			if (walkFrame == 0) image = walkBack1;
+			else if (walkFrame == 2) image = walkBack2;
+			else image = idleBack;
+			break;
 		case DIR_LEFT:
 			if (walkFrame == 0) image = walkLeft1;
 			else if (walkFrame == 2) image = walkLeft2;
@@ -160,7 +168,10 @@ void Player::draw(int cameraX, int cameraY)
 			break;
 		case DIR_FRONT:
 		default:
-			image = (walkFrame == 0) ? walkFront1 : walkFront2; break;
+			if (walkFrame == 0) image = walkFront1;
+			else if (walkFrame == 2) image = walkFront2;
+			else image = idleFront1;
+			break;
 		}
 	}
 	else
@@ -175,9 +186,9 @@ void Player::draw(int cameraX, int cameraY)
 			image = idleRight; break;
 		case DIR_FRONT:
 		default:
-			if (blinkState == 1 || blinkState == 3)  image = idleFront2;
-			else if (blinkState == 2)                image = idleFront3;
-			else                                      image = idleFront1;
+			if (blinkState == 1 || blinkState == 3) image = idleFront2;
+			else if (blinkState == 2) image = idleFront3;
+			else image = idleFront1;
 			break;
 		}
 	}

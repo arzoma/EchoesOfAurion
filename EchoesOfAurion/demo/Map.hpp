@@ -6,7 +6,7 @@ struct Rect
 	int x, y, w, h;
 };
 
-const int MAX_OBSTACLES = 100;
+const int MAX_OBSTACLES = 300;
 
 class Map
 {
@@ -38,6 +38,8 @@ public:
 	bool isBlocked(Rect targetRect);
 
 	void draw();
+
+	void setCameraY(int y);
 
 	int getCameraX();
 	int getCameraY();

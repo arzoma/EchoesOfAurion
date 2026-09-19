@@ -18,21 +18,21 @@ enum PuzzleType { PZ_SELECT, PZ_SEQUENCE, PZ_ODDONE };
 enum ForestOverlay
 {
 	OV_NONE,
-	OV_CLUE,      // clue stone riddle window
-	OV_PUZZLE,    // the path puzzle window
-	OV_DEADEND,   // dark screen + one line
-	OV_REVEAL,    // full screen cloak scrap
-	OV_RESULT     // success.png / failed.png
+	OV_CLUE,
+	OV_PUZZLE,
+	OV_DEADEND,
+	OV_REVEAL,
+	OV_RESULT
 };
 
 struct PathDef
 {
 	PathKind kind;
 	int mouthX, mouthY, mouthW, mouthH;
-	char* riddle; // 0 for the open trap path
+	char* riddle;
 	int answer[3];
 	int answerLen;
-	char* deadEndLine; // 0 if this path is the true one
+	char* deadEndLine;
 };
 
 struct PointDef
@@ -83,6 +83,12 @@ private:
 	int mistakes;
 	bool hasCompass;
 	bool compassUsed;
+	bool clueRead;
+
+	char cardText[40];
+	int cardTick;
+	bool cardActive;
+	bool clearingArrived;
 
 	ForestOverlay overlay;
 	int activeDir; // which path's puzzle is open
@@ -128,7 +134,16 @@ private:
 	bool iconVisible(Player &player, int dir);
 	int  mouthUnderPlayer(Player &player);
 
+	int  searchIconX();
+	int  searchIconY(int camY);
+	int  clearIconX(int dir);
+	int  clearIconY(int dir, int camY);
+
+	int  deadEndRespawnY();
+
 	void showBottomText(char* text, int ticks);
+	void showTitleCard(char* text);
+	void drawTitleCard();
 	void registerMistake();
 	void onPuzzleSolved(int dir);
 	void onWrongAnswer();
@@ -155,6 +170,8 @@ public:
 	void update(Player &player);
 	void draw(Player &player, int mouseX, int mouseY);
 
+	void updateCamera(Player &player);
+
 	void handleClick(Player &player, int mx, int my);
 	void handleKey(unsigned char key);
 
@@ -162,6 +179,9 @@ public:
 
 	bool isFinished();
 	bool isRetryRequested();
+	bool isTitleCardShowing();
+	bool takeClearingArrived();
+	bool isAtClearing();
 
 };
 

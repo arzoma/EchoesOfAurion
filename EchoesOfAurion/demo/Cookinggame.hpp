@@ -36,6 +36,8 @@ private:
 
 	int successImg;
 	int failedImg;
+	int hoverSuccessImg;
+	int hoverFailedImg;
 
 	CookingPhase phase;
 
@@ -45,8 +47,10 @@ private:
 
 	int targetDishes;
 
+	int resultTicks;
+
 	int currentDish;
-	bool selected[7];
+	int picks[3];
 	int selectedCount;
 
 	int animTimer;
@@ -58,6 +62,8 @@ private:
 
 	void pickNewDish();
 	bool checkSelection();
+	bool isSelected(int ingredient);
+	void togglePick(int ingredient);
 	void getIngredientSlotPos(int i, int &x, int &y);
 	void getNeededSlotPos(int j, int &x, int &y);
 	bool isInsideBox(int mx, int my, int bx, int by, int bw, int bh);

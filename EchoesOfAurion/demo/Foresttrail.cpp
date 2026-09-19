@@ -15,22 +15,44 @@ void iText(double x, double y, char *str, void *font);
 extern float g_imgAlpha;
 extern bool  g_imgAdditive;
 
+int getTextWidth(const char* text);
+
 static const int CLUE_STONE_X = 250, CLUE_STONE_Y = 430;
 static const int CLUE_STONE_W = 200, CLUE_STONE_H = 180;
 
 static const int CLUE_TRIGGER_X = 200, CLUE_TRIGGER_Y = 360;
 static const int CLUE_TRIGGER_W = 360, CLUE_TRIGGER_H = 340;
 
+static const int CLUE_BLOCK_X = 280, CLUE_BLOCK_Y = 440;
+static const int CLUE_BLOCK_W = 140, CLUE_BLOCK_H = 110;
+
 static const int SEARCH_ICON_SIZE = 56;
 static const int CLEAR_ICON_SIZE = 56;
 static const int ICON_REACH = 220;
 
+static const int SEARCH_ICON_DX = 0;
+static const int SEARCH_ICON_DY = -40;
+static const int CLEAR_ICON_DX = 0;
+static const int CLEAR_ICON_DY = 0;
+
 static const int COMPASS_X = 540, COMPASS_Y = 340, COMPASS_SIZE = 120;
 
 static const int FADE_TICKS = 20;
+static const int CARD_IN = 40;
+static const int CARD_HOLD = 90;
+static const int CARD_OUT = 40;
+static const int CARD_TOTAL = CARD_IN + CARD_HOLD + CARD_OUT;
+
 static const int BOTTOM_TEXT_X = 250, BOTTOM_TEXT_Y = 60;
 
 static const int MISTAKE_TEXT_X = 1090, MISTAKE_TEXT_Y = 660;
+
+static const int DEADEND_CLEARANCE = 40;
+
+static const int WALL_W = 180;
+static const int WALL_H = 880;
+static const int THICKET_Y = 880;
+static const int THICKET_H = 320;
 
 static const int SEL_SLOT_X[4] = { 340, 490, 640, 790 };
 static const int SEL_SLOT_Y = 300;
@@ -50,7 +72,7 @@ static const int ODD_ROW_Y[2] = { 380, 250 };
 static const int ODD_TILE_SIZE = 100;
 
 static const int RIDDLE_TEXT_X = 300;
-static const int RIDDLE_TEXT_Y = 560;
+static const int RIDDLE_TEXT_Y = 548;
 static const int RIDDLE_LINE_H = 30;
 
 enum { SYM_SUN = 0, SYM_MOON, SYM_STAR, SYM_LEAF };
@@ -66,13 +88,16 @@ static char* WRONG_LINES[3] =
 	"The branches hold. Whatever you just told the grove, it wasn't true."
 };
 
+#define MOUTH_WEST 40,  580, 240, 200
+#define MOUTH_NORTH 480,  880, 240, 200
+#define MOUTH_EAST 1000,  532, 240, 200
 
 static PointDef POINTS[FOREST_POINTS] =
 {
 	{
 		"Something glimmers faintly among the roots.",
 
-		"Three mouths open before you, and only one still breathes.\n"
+		"\n\nThree mouths open before you, and only one still breathes.\n"
 		"Do not trust the road that welcomes you - the forest sets\n"
 		"no table for strangers.\n"
 		"Turn instead to where the first light climbs.",
@@ -80,19 +105,19 @@ static PointDef POINTS[FOREST_POINTS] =
 		PZ_SELECT, PATH_EAST,
 		{
 			// WEST - blocked, decoy
-			{ PATH_BLOCKED_DECOY, 40, 880, 240, 200,
+			{ PATH_BLOCKED_DECOY, MOUTH_WEST,
 			"Every living thing in this grove turns its face to me\n"
 			"each morning. Wake me, and the grove wakes with me.",
 			{ SYM_SUN, 0, 0 }, 1,
 			"The trail gives out in thicket. An old fire ring, long cold." },
 
 			// NORTH - open trap
-			{ PATH_OPEN_TRAP, 520, 1000, 240, 200,
+			{ PATH_OPEN_TRAP, MOUTH_NORTH,
 			0, { 0, 0, 0 }, 0,
 			"The path runs twenty paces and ends against a wall of roots." },
 
 			// EAST - blocked, true
-			{ PATH_BLOCKED_TRUE, 1000, 880, 240, 200,
+			{ PATH_BLOCKED_TRUE, MOUTH_EAST,
 			"I am not the fire that wakes the world, nor the small\n"
 			"lights that trail behind it.\n"
 			"I am the lantern the dark carries. Set your hand on me.",
@@ -104,29 +129,29 @@ static PointDef POINTS[FOREST_POINTS] =
 	{
 		"The same markings. The same light. You are not certain that is a good sign.",
 
-		"The light that carried you this far is failing now.\n"
+		"\n\n\nThe light that carried you this far is failing now.\n"
 		"Walk the way it falls - follow the sun down into its grave.\n"
 		"What stands open was opened for you. Let that trouble you.",
 
 		PZ_SEQUENCE, PATH_WEST,
 		{
 			// WEST - blocked, true
-			{ PATH_BLOCKED_TRUE, 40, 880, 240, 200,
-			"First the fire wakes and burns the dark away.\n"
-			"Then the lantern rises to keep the watch in its place.\n"
+			{ PATH_BLOCKED_TRUE, MOUTH_WEST,
+			"First the fire wakes and burns the dark away. "
+			"Then the lantern rises\nto keep the watch in its place. "
 			"Last the small ones gather, and the night is full.",
 			{ SYM_SUN, SYM_MOON, SYM_STAR }, 3, 0 },
 
 			// NORTH - blocked, decoy
-			{ PATH_BLOCKED_DECOY, 520, 1000, 240, 200,
-			"The night grows old before the grove stirs.\n"
-			"The small ones fade first. Then the lantern sinks.\n"
+			{ PATH_BLOCKED_DECOY, MOUTH_NORTH,
+			"The night grows old before the grove stirs. "
+			"The small ones fade first.\nThen the lantern sinks. "
 			"Only then does the fire come to claim the sky.",
 			{ SYM_STAR, SYM_MOON, SYM_SUN }, 3,
 			"Branches, then more branches. Someone cut this trail and gave up halfway." },
 
 			// EAST - open trap
-			{ PATH_OPEN_TRAP, 1000, 880, 240, 200,
+			{ PATH_OPEN_TRAP, MOUTH_EAST,
 			0, { 0, 0, 0 }, 0,
 			"The ground turns to standing water. Whatever this was, the forest has taken it back." }
 		}
@@ -136,7 +161,7 @@ static PointDef POINTS[FOREST_POINTS] =
 	{
 		"The stone is warm. Whatever is written here was written recently.",
 
-		"The sun is no use to you here; it never reached this deep.\n"
+		"\n\nThe sun is no use to you here; it never reached this deep.\n"
 		"Keep the cold against your face and climb.\n"
 		"And look closely at what waits - one mark ahead was cut\n"
 		"by a hand that did not wander.",
@@ -144,25 +169,25 @@ static PointDef POINTS[FOREST_POINTS] =
 		PZ_ODDONE, PATH_NORTH,
 		{
 			// WEST - open trap
-			{ PATH_OPEN_TRAP, 40, 880, 240, 200,
+			{ PATH_OPEN_TRAP, MOUTH_WEST,
 			0, { 0, 0, 0 }, 0,
 			"The trees close ahead of you - not slowly. You step back before they finish." },
 
 			// NORTH - blocked, true
-			{ PATH_BLOCKED_TRUE, 520, 1000, 240, 200,
-			"The grove signs its name in circles; every mark that grew\n"
+			{ PATH_BLOCKED_TRUE, MOUTH_NORTH,
+			"The grove signs its name in circles; every mark that grew "
 			"here closes upon itself.\n"
-			"One does not close. One was cut quickly, by someone who\n"
+			"One does not close. One was cut quickly, by someone who "
 			"did not mean to stay.\n"
 			"Find the hand that did not wander.",
 			{ RUNE_F, 0, 0 }, 1,
 			0 },
 
 			// EAST - blocked, decoy
-			{ PATH_BLOCKED_DECOY, 1000, 880, 240, 200,
-			"A hundred winters have fed on these marks and the moss\n"
+			{ PATH_BLOCKED_DECOY, MOUTH_EAST,
+			"A hundred winters have fed on these marks and the moss "
 			"has taken them all.\n"
-			"All but one. Something here is younger than your journey.\n"
+			"All but one. Something here is younger than your journey. "
 			"Find what does not belong.",
 			{ RUNE_H, 0, 0 }, 1,
 			"A fresh carving on a dead trunk, and nothing beyond it.\n"
@@ -170,6 +195,108 @@ static PointDef POINTS[FOREST_POINTS] =
 		}
 	}
 };
+
+static void drawBottomText(char* s)
+{
+	int w = getTextWidth(s);
+	int x = SCREEN_WIDTH / 2 - w / 2;
+
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.55f);
+
+	glBegin(GL_QUADS);
+	glVertex2f((float)(x - 20), 44.0f);
+	glVertex2f((float)(x + w + 20), 44.0f);
+	glVertex2f((float)(x + w + 20), 82.0f);
+	glVertex2f((float)(x - 20), 82.0f);
+	glEnd();
+
+	glDisable(GL_BLEND);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	iSetColor(255, 255, 255);
+	iText(x, 56, s, GLUT_BITMAP_HELVETICA_18);
+}
+
+void ForestTrail::showTitleCard(char* text)
+{
+	strcpy_s(cardText, text);
+	cardTick = 0;
+	cardActive = true;
+}
+
+// Black screen with one line of text fading in and out, centred both ways.
+void ForestTrail::drawTitleCard()
+{
+	if (!cardActive) return;
+
+	float a;
+	if (cardTick < CARD_IN) a = (float)cardTick / CARD_IN;
+	else if (cardTick < CARD_IN + CARD_HOLD) a = 1.0f;
+	else a = 1.0f - (float)(cardTick - CARD_IN - CARD_HOLD) / CARD_OUT;
+
+	if (a < 0.0f) a = 0.0f;
+	if (a > 1.0f) a = 1.0f;
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+
+	glBegin(GL_QUADS);
+	glVertex2f(0.0f, 0.0f);
+	glVertex2f((float)SCREEN_WIDTH, 0.0f);
+	glVertex2f((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+	glVertex2f(0.0f, (float)SCREEN_HEIGHT);
+	glEnd();
+
+	void* font = GLUT_BITMAP_TIMES_ROMAN_24;
+	const int track = 6;
+
+	int w = 0;
+	for (int i = 0; cardText[i] != '\0'; i++) w += glutBitmapWidth(font, cardText[i]) + track;
+	if (w > 0) w -= track;
+
+	int x = SCREEN_WIDTH / 2 - w / 2;
+	int y = SCREEN_HEIGHT / 2 - 9;
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 1.0f, 1.0f, a);
+
+	char one[2];
+	one[1] = '\0';
+	int cx = x;
+
+	for (int i = 0; cardText[i] != '\0'; i++)
+	{
+		one[0] = cardText[i];
+		iText(cx, y, one, font);
+		cx += glutBitmapWidth(font, cardText[i]) + track;
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glDisable(GL_BLEND);
+}
+
+bool ForestTrail::isTitleCardShowing()
+{
+	return cardActive;
+}
+
+bool ForestTrail::takeClearingArrived()
+{
+	if (!clearingArrived || cardActive) return false;
+
+	clearingArrived = false;
+	return true;
+}
+
+bool ForestTrail::isAtClearing()
+{
+	return atEnding;
+}
 
 void ForestTrail::loadImages()
 {
@@ -226,6 +353,32 @@ Map& ForestTrail::getMap()
 	return trailMap;
 }
 
+void ForestTrail::updateCamera(Player &player)
+{
+	trailMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	int lo, hi;
+
+	if (atEnding)
+	{
+		lo = FOREST_SEG_H * FOREST_POINTS;
+		hi = FOREST_WORLD_H - SCREEN_HEIGHT;
+		if (hi < lo) hi = lo;
+	}
+	else
+	{
+		lo = currentPoint * FOREST_SEG_H;
+		hi = lo + FOREST_SEG_H - SCREEN_HEIGHT;
+		if (hi < lo) hi = lo;
+	}
+
+	int cy = trailMap.getCameraY();
+	if (cy < lo) cy = lo;
+	if (cy > hi) cy = hi;
+
+	trailMap.setCameraY(cy);
+}
+
 void ForestTrail::start(bool playerHasCompass)
 {
 	for (int p = 0; p < FOREST_POINTS; p++)
@@ -236,6 +389,7 @@ void ForestTrail::start(bool playerHasCompass)
 	mistakes = 0;
 	hasCompass = playerHasCompass;
 	compassUsed = false;
+	clueRead = false;
 
 	overlay = OV_NONE;
 	activeDir = -1;
@@ -262,7 +416,12 @@ void ForestTrail::start(bool playerHasCompass)
 	finished = false;
 	retryRequested = false;
 
-	currentPoint = 0;
+	cardTick = 0;
+	cardActive = false;
+	clearingArrived = false;
+
+	enterPoint(0);
+	showTitleCard("Junction 1");
 }
 
 void ForestTrail::initOrbs()
@@ -281,16 +440,15 @@ void ForestTrail::buildSegmentObstacles(int p)
 
 	trailMap.clearObstacles();
 
-	// the static rects
-	trailMap.addObstacle(0, base + 0, 180, 880);
-	trailMap.addObstacle(1100, base + 0, 180, 880);
-	trailMap.addObstacle(280, base + 880, 240, 320);
-	trailMap.addObstacle(760, base + 880, 240, 320);
+	trailMap.addObstacle(0, base + 0, WALL_W, WALL_H);
+	trailMap.addObstacle(1280 - WALL_W, base + 0, WALL_W, WALL_H);
+	trailMap.addObstacle(280, base + THICKET_Y, 240, THICKET_H);
+	trailMap.addObstacle(760, base + THICKET_Y, 240, THICKET_H);
 	trailMap.addObstacle(0, base + 1080, 280, 120);
 	trailMap.addObstacle(1000, base + 1080, 280, 120);
 	trailMap.addObstacle(0, base - 40, 1280, 40);
+	trailMap.addObstacle(CLUE_BLOCK_X, base + CLUE_BLOCK_Y, CLUE_BLOCK_W, CLUE_BLOCK_H);
 
-	// one branch obstacle per blocked path, switched off once cleared
 	for (int d = 0; d < 3; d++)
 	{
 		branchObstacleIdx[d] = -1;
@@ -317,18 +475,21 @@ void ForestTrail::enterPoint(int p)
 	seqCount = 0;
 	for (int i = 0; i < 3; i++) seqPicks[i] = -1;
 	compassUsed = false;
+	clueRead = false;
 }
 
 void ForestTrail::enterClearing()
 {
 	atEnding = true;
 	endStep = 0;
+	clearingArrived = true;
 
 	trailMap.clearObstacles();
 	trailMap.addObstacle(0, FOREST_SEG_H * FOREST_POINTS - 40, 1280, 40);
-	trailMap.addObstacle(0, FOREST_SEG_H * FOREST_POINTS, 180, FOREST_TOP_H);
-	trailMap.addObstacle(1100, FOREST_SEG_H * FOREST_POINTS, 180, FOREST_TOP_H);
+	trailMap.addObstacle(0, FOREST_SEG_H * FOREST_POINTS, WALL_W, FOREST_TOP_H);
+	trailMap.addObstacle(1280 - WALL_W, FOREST_SEG_H * FOREST_POINTS, WALL_W, FOREST_TOP_H);
 	trailMap.addObstacle(0, FOREST_WORLD_H - 40, 1280, 40);
+	trailMap.addObstacle(CLEARING_OBJ_X, FOREST_SEG_H * FOREST_POINTS + CLEARING_OBJ_Y, CLEARING_OBJ_W, CLEARING_OBJ_H);
 }
 
 bool ForestTrail::isInsideBox(int mx, int my, int bx, int by, int bw, int bh)
@@ -389,6 +550,45 @@ int ForestTrail::mouthUnderPlayer(Player &player)
 	}
 
 	return -1;
+}
+
+int ForestTrail::searchIconX()
+{
+	return CLUE_STONE_X + CLUE_STONE_W / 2 - SEARCH_ICON_SIZE / 2 + SEARCH_ICON_DX;
+}
+
+int ForestTrail::searchIconY(int camY)
+{
+	return currentPoint * FOREST_SEG_H + CLUE_STONE_Y + CLUE_STONE_H + SEARCH_ICON_DY - camY;
+}
+
+int ForestTrail::clearIconX(int dir)
+{
+	PathDef &pd = POINTS[currentPoint].path[dir];
+	return pd.mouthX + pd.mouthW / 2 - CLEAR_ICON_SIZE / 2 + CLEAR_ICON_DX;
+}
+
+int ForestTrail::clearIconY(int dir, int camY)
+{
+	PathDef &pd = POINTS[currentPoint].path[dir];
+	return currentPoint * FOREST_SEG_H + pd.mouthY + pd.mouthH / 2
+		- CLEAR_ICON_SIZE / 2 + CLEAR_ICON_DY - camY;
+}
+
+int ForestTrail::deadEndRespawnY()
+{
+	int lowest = POINTS[currentPoint].path[0].mouthY;
+
+	for (int d = 1; d < 3; d++)
+	{
+		if (POINTS[currentPoint].path[d].mouthY < lowest)
+			lowest = POINTS[currentPoint].path[d].mouthY;
+	}
+
+	int y = lowest - PLAYER_HEIGHT - DEADEND_CLEARANCE;
+	if (y < FOREST_SPAWN_Y) y = FOREST_SPAWN_Y;
+
+	return currentPoint * FOREST_SEG_H + y;
 }
 
 void ForestTrail::showBottomText(char* text, int ticks)
@@ -558,6 +758,17 @@ void ForestTrail::drawBranches()
 
 void ForestTrail::update(Player &player)
 {
+	if (cardActive)
+	{
+		cardTick++;
+		if (cardTick >= CARD_TOTAL)
+		{
+			cardActive = false;
+			cardTick = 0;
+		}
+		return;
+	}
+	
 	updateFade();
 
 	if (fadePhase == 2 && fadeTick == 1)
@@ -572,15 +783,20 @@ void ForestTrail::update(Player &player)
 			enterClearing();
 			player.init(FOREST_SPAWN_X, FOREST_SEG_H * FOREST_POINTS + 40);
 			player.setFacing(DIR_BACK);
+			showTitleCard("Forest Clearing");
 		}
 		else
 		{
 			enterPoint(fadePendingPoint);
 			player.init(FOREST_SPAWN_X, fadePendingPoint * FOREST_SEG_H + FOREST_SPAWN_Y);
 			player.setFacing(DIR_BACK);
+
+			char card[40];
+			sprintf_s(card, "Junction %d", fadePendingPoint + 1);
+			showTitleCard(card);
 		}
 
-		trailMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		updateCamera(player);
 	}
 
 	if (bottomTextTicks > 0) bottomTextTicks--;
@@ -624,16 +840,13 @@ void ForestTrail::draw(Player &player, int mouseX, int mouseY)
 
 	// one segment drawn three times
 	for (int p = 0; p < FOREST_POINTS; p++)
+	if (atEnding)
 	{
-		int sy = p * FOREST_SEG_H - camY;
-		if (sy > SCREEN_HEIGHT || sy + FOREST_SEG_H < 0) continue;
-		iShowImage(0, sy, FOREST_SEG_W, FOREST_SEG_H, segmentImg);
+		iShowImage(0, FOREST_SEG_H * FOREST_POINTS - camY, FOREST_SEG_W, FOREST_TOP_H, topClearingImg);
 	}
-
-	int clearingY = FOREST_SEG_H * FOREST_POINTS - camY;
-	if (clearingY < SCREEN_HEIGHT && clearingY + FOREST_TOP_H > 0)
+	else
 	{
-		iShowImage(0, clearingY, FOREST_SEG_W, FOREST_TOP_H, topClearingImg);
+		iShowImage(0, currentPoint * FOREST_SEG_H - camY, FOREST_SEG_W, FOREST_SEG_H, segmentImg);
 	}
 
 	if (!atEnding)
@@ -655,12 +868,10 @@ void ForestTrail::draw(Player &player, int mouseX, int mouseY)
 
 	if (!atEnding && overlay == OV_NONE)
 	{
-		int base = currentPoint * FOREST_SEG_H;
-
 		if (playerNearStone(player))
 		{
-			int ix = CLUE_STONE_X + CLUE_STONE_W / 2 - SEARCH_ICON_SIZE / 2;
-			int iy = base + CLUE_STONE_Y + CLUE_STONE_H + 20 - camY;
+			int ix = searchIconX();
+			int iy = searchIconY(camY);
 			bool hov = isInsideBox(mouseX, mouseY, ix, iy, SEARCH_ICON_SIZE, SEARCH_ICON_SIZE);
 			iShowImage(ix, iy, SEARCH_ICON_SIZE, SEARCH_ICON_SIZE, hov ? searchIconHover : searchIcon);
 		}
@@ -669,9 +880,8 @@ void ForestTrail::draw(Player &player, int mouseX, int mouseY)
 		{
 			if (!iconVisible(player, d)) continue;
 
-			PathDef &pd = POINTS[currentPoint].path[d];
-			int ix = pd.mouthX + pd.mouthW / 2 - CLEAR_ICON_SIZE / 2;
-			int iy = base + pd.mouthY + pd.mouthH / 2 - CLEAR_ICON_SIZE / 2 - camY;
+			int ix = clearIconX(d);
+			int iy = clearIconY(d, camY);
 			bool hov = isInsideBox(mouseX, mouseY, ix, iy, CLEAR_ICON_SIZE, CLEAR_ICON_SIZE);
 			iShowImage(ix, iy, CLEAR_ICON_SIZE, CLEAR_ICON_SIZE, hov ? clearIconHover : clearIcon);
 		}
@@ -708,7 +918,7 @@ void ForestTrail::draw(Player &player, int mouseX, int mouseY)
 	else if (overlay == OV_RESULT)
 	{
 		iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-			(mistakes >= FOREST_MAX_MISTAKES) ? failedImg : successImg);
+		(mistakes >= FOREST_MAX_MISTAKES) ? failedImg : successImg);
 	}
 
 	char mistakeText[40];
@@ -718,21 +928,19 @@ void ForestTrail::draw(Player &player, int mouseX, int mouseY)
 
 	if (bottomTextTicks > 0)
 	{
-		iSetColor(255, 255, 255);
-		iText(BOTTOM_TEXT_X, BOTTOM_TEXT_Y, bottomText, GLUT_BITMAP_HELVETICA_18);
+		drawBottomText(bottomText);
 	}
 	else if (overlay == OV_NONE && !atEnding && playerNearStone(player))
 	{
-		iSetColor(255, 255, 255);
-		iText(BOTTOM_TEXT_X, BOTTOM_TEXT_Y, POINTS[currentPoint].proximityLine, GLUT_BITMAP_HELVETICA_18);
+		drawBottomText(POINTS[currentPoint].proximityLine);
 	}
-	else if (overlay == OV_NONE && !atEnding && hasCompass && !compassUsed)
+	else if (overlay == OV_NONE && !atEnding && hasCompass && !compassUsed && clueRead)
 	{
-		iSetColor(255, 255, 255);
-		iText(BOTTOM_TEXT_X, BOTTOM_TEXT_Y, "Press C - use the compass", GLUT_BITMAP_HELVETICA_18);
+		drawBottomText("Press C - use the compass");
 	}
 
 	drawFadeOverlay();
+	drawTitleCard();
 }
 
 void ForestTrail::drawPuzzle(int mouseX, int mouseY)
@@ -891,7 +1099,7 @@ void ForestTrail::handlePuzzleClick(int mx, int my)
 
 void ForestTrail::handleClick(Player &player, int mx, int my)
 {
-	if (fadePhase != 0) return;
+	if (fadePhase != 0 || cardActive) return;
 
 	if (overlay == OV_RESULT)
 	{
@@ -911,6 +1119,7 @@ void ForestTrail::handleClick(Player &player, int mx, int my)
 	if (overlay == OV_CLUE)
 	{
 		overlay = OV_NONE;
+		clueRead = true;
 		return;
 	}
 
@@ -920,31 +1129,14 @@ void ForestTrail::handleClick(Player &player, int mx, int my)
 		return;
 	}
 
-	if (atEnding)
-	{
-		if (endStep == 0)
-		{
-			overlay = OV_REVEAL;
-		}
-		else if (endStep == 1)
-		{
-			endStep = 2;
-			showBottomText("He went deeper than the warden ever knew.", 400);
-		}
-		else if (endStep == 2)
-		{
-			overlay = OV_RESULT;
-		}
-		return;
-	}
+	if (atEnding) return;
 
-	int base = currentPoint * FOREST_SEG_H;
 	int camY = trailMap.getCameraY();
 
 	if (playerNearStone(player))
 	{
-		int ix = CLUE_STONE_X + CLUE_STONE_W / 2 - SEARCH_ICON_SIZE / 2;
-		int iy = base + CLUE_STONE_Y + CLUE_STONE_H + 20 - camY;
+		int ix = searchIconX();
+		int iy = searchIconY(camY);
 
 		if (isInsideBox(mx, my, ix, iy, SEARCH_ICON_SIZE, SEARCH_ICON_SIZE))
 		{
@@ -957,9 +1149,8 @@ void ForestTrail::handleClick(Player &player, int mx, int my)
 	{
 		if (!iconVisible(player, d)) continue;
 
-		PathDef &pd = POINTS[currentPoint].path[d];
-		int ix = pd.mouthX + pd.mouthW / 2 - CLEAR_ICON_SIZE / 2;
-		int iy = base + pd.mouthY + pd.mouthH / 2 - CLEAR_ICON_SIZE / 2 - camY;
+		int ix = clearIconX(d);
+		int iy = clearIconY(d, camY);
 
 		if (isInsideBox(mx, my, ix, iy, CLEAR_ICON_SIZE, CLEAR_ICON_SIZE))
 		{

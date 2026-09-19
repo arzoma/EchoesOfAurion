@@ -10,8 +10,8 @@ private:
 	int itemIcon;
 
 	bool active;
-	int frame;
-	int frameTimer;
+	double popupAlpha;
+	double glowTimer;
 
 public:
 

@@ -190,7 +190,7 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glBegin(GL_QUADS);
 
@@ -207,6 +207,10 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 		glVertex2f(x, y + height);
 
 	glEnd();
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	g_imgAlpha = 1.0f;
+	g_imgAdditive = false;
 
 	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);

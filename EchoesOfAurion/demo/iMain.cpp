@@ -30,7 +30,9 @@ enum GameState{
 	COOKING_GAME,
 	SERVING_GAME,
 	FOREST,
-	FOREST_TRAIL
+	FOREST_TRAIL,
+	MOONVEIL,
+	TITLE_CARD
 
 };
 
@@ -118,6 +120,65 @@ void updateFade()
 	}
 }
 
+char titleLine1[64] = "";
+char titleLine2[64] = "";
+int titleTick = 0;
+GameState titlePendingState = MAIN_MENU;
+
+const int TITLE_L1_IN = 0, TITLE_L1_DONE = 45;
+const int TITLE_L2_IN = 70, TITLE_L2_DONE = 115;
+const int TITLE_HOLD = 190;
+
+const int TITLE_X = 90;
+const int TITLE_Y1 = 150;
+const int TITLE_Y2 = 115;
+
+void requestTitleCard(char* l1, char* l2, GameState next)
+{
+	strcpy_s(titleLine1, l1);
+	strcpy_s(titleLine2, l2 ? l2 : "");
+	titleTick = 0;
+	titlePendingState = next;
+	requestFade(TITLE_CARD);
+}
+
+void drawFadingText(int x, int y, char* s, float alpha, void* font, int track)
+{
+	if (alpha <= 0.0f) return;
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 1.0f, 1.0f, alpha);
+
+	if (track == 0)
+	{
+		iText(x, y, s, font);
+	}
+	else
+	{
+		char one[2];
+		one[1] = '\0';
+		int cx = x;
+
+		for (int i = 0; s[i] != '\0'; i++)
+		{
+			one[0] = s[i];
+			iText(cx, y, one, font);
+			cx += glutBitmapWidth(font, s[i]) + track;
+		}
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glDisable(GL_BLEND);
+}
+
+float titleAlpha(int tick, int inAt, int doneAt)
+{
+	if (tick <= inAt) return 0.0f;
+	if (tick >= doneAt) return 1.0f;
+	return (float)(tick - inAt) / (doneAt - inAt);
+}
+
 MainMenu mainMenu;
 Settings settings;
 Credits credits;
@@ -167,8 +228,22 @@ int activeForestNpc = 0; // 0 none, 1 warden, 2 herbalist
 
 bool showDeepPrompt = false;  // "Enter the Deep Forest"
 
+int travelEmberfallImg, travelEmberfallHoverImg;
+int travelForestImg, travelForestHoverImg;
+int travelSilverleafImg, travelSilverleafHoverImg;
+
+bool showSilverleafPrompt = false;
+
+int revealJournalImg;
+int travelMoonveilImg, travelMoonveilHoverImg;
+
+bool showMoonveilPrompt = false;
+bool showingJournalImage = false;
+
+int clearingStep = -1;
+
 int throneStep = 0;  // 0 = king talking, 1 = mc's reply, 2 = moved on
-int hallwayStep = 0; // 0 = mc's lines playing, 1 = "Travel to Emberfall" prompt showing
+int hallwayStep = 0;
 int restaurantStep = -1; // -1 = waiting for restaurant npc click, 0 = restaurant npc's lines, 1 = mc's lines, 2 = the two options
 
 int npc1Step = -1;
@@ -381,13 +456,31 @@ char* mcHerbLines4[] = { "Why give it to me?" };
 char* herbLines5[] = { "Because you'll need all the help you can get." };
 char* mcHerbLines5[] = { "...Thank you. I'll make good use of it." };
 
+char* clearingLines1[] =
+{
+	"A piece of cloth, a page, a magic artifact... and a circle someone drew and never finished.",
+	"Master was here.",
+	"Did he leave all of this behind on purpose...?"
+};
+const int CLEARING_LINE_COUNT_1 = 3;
+
+char* clearingLines2[] =
+{
+	"Moonveil Temple... I've heard of it.",
+	"It's the oldest place in Aurion. The five mages raised it over ground where the veil between worlds runs thin, and everything they learned about the seals was written down inside it.",
+	"But there was a monster attack there not long ago. It's been abandoned ever since.",
+	"So that's where master went next. Then that's where I'm going.",
+	"And he left the artifact for whoever followed him. It will surely be of help."
+};
+const int CLEARING_LINE_COUNT_2 = 5;
 
 const int THRONE_PLAYER_X = 595, THRONE_PLAYER_Y = 150;
 const int HALLWAY_PLAYER_X = 595, HALLWAY_PLAYER_Y = 300;
 const int VILLAGE_SPAWN_X = 1000, VILLAGE_SPAWN_Y = 340;
+const int MOONVEIL_SPAWN_X = 600, MOONVEIL_SPAWN_Y = 120;
 
-const int RESTAURANT_PLAYER_X = 230;
-const int RESTAURANT_PLAYER_Y = 75;
+const int RESTAURANT_PLAYER_X = 214;
+const int RESTAURANT_PLAYER_Y = 27;
 
 const int RESTAURANT_NPC_X = 500;
 const int RESTAURANT_NPC_Y = 380;
@@ -397,18 +490,19 @@ const int RESTAURANT_DOOR_Y = 1300;
 const int RESTAURANT_DOOR_W = 67;
 const int RESTAURANT_DOOR_H = 92;
 
-const int RESTAURANT_TRIGGER_X = 2132;
-const int RESTAURANT_TRIGGER_Y = 1167;
-const int RESTAURANT_TRIGGER_W = 95;
-const int RESTAURANT_TRIGGER_H = 103;
+const int RESTAURANT_TRIGGER_X = 2130;
+const int RESTAURANT_TRIGGER_Y = 1330;
+const int RESTAURANT_TRIGGER_W = 100;
+const int RESTAURANT_TRIGGER_H = 27;
 
 const int VILLAGE_EXIT_X = 0;
 const int VILLAGE_EXIT_Y = 0;
 const int VILLAGE_EXIT_W = 60;
 const int VILLAGE_EXIT_H = 60;
 
-const double TRAVEL_TEXT_X_MIN = 0.40, TRAVEL_TEXT_X_MAX = 0.60;
-const double TRAVEL_TEXT_Y_MIN = 0.10, TRAVEL_TEXT_Y_MAX = 0.16;
+const int TRAVEL_IMG_X = 465, TRAVEL_IMG_Y = -24;
+const int TRAVEL_HIT_X_MIN = 500, TRAVEL_HIT_X_MAX = 780;
+const int TRAVEL_HIT_Y_MIN = 55, TRAVEL_HIT_Y_MAX = 95;
 
 const int FOREST_SPAWN_WX = 761, FOREST_SPAWN_WY = 130;
 
@@ -440,7 +534,7 @@ void enterThroneRoom()
 
 	dialogueBox.startDialogue("King", kingLines, KING_LINE_COUNT, false, kingBoxImg);
 
-	requestFade(THRONE_ROOM);
+	requestTitleCard("Throne Room", "Royal Palace of Aurion", THRONE_ROOM);
 }
 
 void enterHallway()
@@ -454,7 +548,7 @@ void enterHallway()
 
 	dialogueBox.startDialogue(nameInput.getName(), hallwayLines1, HALLWAY_LINE_COUNT_1, true);
 
-	requestFade(HALLWAY);
+	requestTitleCard("Palace Hallway", 0, HALLWAY);
 }
 
 void enterVillage()
@@ -466,7 +560,7 @@ void enterVillage()
 
 	villageMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
 
-	requestFade(VILLAGE);
+	requestTitleCard("Emberfall Village", 0, VILLAGE);
 }
 
 void enterForest()
@@ -481,7 +575,7 @@ void enterForest()
 
 	forestMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
 
-	requestFade(FOREST);
+	requestTitleCard("Silverleaf Forest", 0, FOREST);
 }
 
 void enterForestTrail()
@@ -489,9 +583,19 @@ void enterForestTrail()
 	forestTrail.start(inventory.getHasCompass());
 	player.init(FOREST_SPAWN_X, FOREST_SPAWN_Y);
 	player.setFacing(DIR_BACK);
-	forestTrail.getMap().updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+	forestTrail.updateCamera(player);
 
 	requestFade(FOREST_TRAIL);
+}
+
+void enterMoonveil()
+{
+	showMoonveilPrompt = false;
+
+	player.init(MOONVEIL_SPAWN_X, MOONVEIL_SPAWN_Y);
+	player.setFacing(DIR_BACK);
+
+	requestTitleCard("Moonveil Temple", "Abandoned since the attack", MOONVEIL);
 }
 
 void enterRestaurant()
@@ -521,14 +625,14 @@ void returnToRestaurantAfterMinigame()
 void enterCookingGame()
 {
 	//currentState = COOKING_GAME;
-	cookingGame.start();
+	cookingGame.start(inventory.getHasHoodedGift());
 	requestFade(COOKING_GAME);
 }
 
 void enterServingGame()
 {
 	//currentState = SERVING_GAME;
-	servingGame.start();
+	servingGame.start(inventory.getHasHoodedGift());
 	requestFade(SERVING_GAME);
 }
 
@@ -545,6 +649,18 @@ void exitRestaurantToVillage()
 void confirmName()
 {
 	enterThroneRoom();
+}
+
+bool overTravelPrompt(int mx, int my)
+{
+	return mx >= TRAVEL_HIT_X_MIN && mx <= TRAVEL_HIT_X_MAX &&
+		my >= TRAVEL_HIT_Y_MIN && my <= TRAVEL_HIT_Y_MAX;
+}
+
+void drawTravelPrompt(int normalImg, int hoverImg)
+{
+	bool hov = overTravelPrompt(mouseX, mouseY);
+	iShowImage(TRAVEL_IMG_X, TRAVEL_IMG_Y, 350, 197, hov ? hoverImg : normalImg);
 }
 
 void iDraw()
@@ -571,6 +687,30 @@ void iDraw()
 		nameInput.draw();
 		break;
 
+	case TITLE_CARD:
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glBegin(GL_QUADS);
+		glVertex2f(0, 0);
+		glVertex2f((float)SCREEN_WIDTH, 0);
+		glVertex2f((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+		glVertex2f(0, (float)SCREEN_HEIGHT);
+		glEnd();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+		drawFadingText(TITLE_X, TITLE_Y1, titleLine1,
+		titleAlpha(titleTick, TITLE_L1_IN, TITLE_L1_DONE),
+		GLUT_BITMAP_TIMES_ROMAN_24, 6);
+
+		if (titleLine2[0] != '\0')
+		{
+			drawFadingText(TITLE_X, TITLE_Y2, titleLine2,
+			titleAlpha(titleTick, TITLE_L2_IN, TITLE_L2_DONE),
+			GLUT_BITMAP_9_BY_15, 2);
+		}
+
+		break;
+
 	case THRONE_ROOM:
 		throneRoomMap.draw();
 		king.draw(0, 0);
@@ -592,8 +732,7 @@ void iDraw()
 
 			if (hallwayStep == 1)
 			{
-				iSetColor(255, 255, 255);
-				iText((int)(SCREEN_WIDTH * 0.42), (int)(SCREEN_HEIGHT * 0.12), "Travel to Emberfall", GLUT_BITMAP_HELVETICA_18);
+				drawTravelPrompt(travelEmberfallImg, travelEmberfallHoverImg);
 			}
 
 		}
@@ -632,6 +771,12 @@ void iDraw()
 		player.draw(0, 0);
 		dialogueBox.draw(mouseX, mouseY);
 		inventory.draw(mouseX, mouseY);
+
+		if (showSilverleafPrompt && !dialogueBox.isActive())
+		{
+			drawTravelPrompt(travelSilverleafImg, travelSilverleafHoverImg);
+		}
+
 		break;
 
 	case COOKING_GAME:
@@ -641,40 +786,78 @@ void iDraw()
 
 	case SERVING_GAME:
 
-		servingGame.draw();
+		servingGame.draw(mouseX, mouseY);
 		break;
 
 	case FOREST:
 	{
-				   forestMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
-				   forestMap.draw();
-				   forestWarden.draw(forestMap.getCameraX(), forestMap.getCameraY());
-				   herbalist.draw(forestMap.getCameraX(), forestMap.getCameraY());
-				   player.draw(forestMap.getCameraX(), forestMap.getCameraY());
+		forestMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		forestMap.draw();
+		forestWarden.draw(forestMap.getCameraX(), forestMap.getCameraY());
+		herbalist.draw(forestMap.getCameraX(), forestMap.getCameraY());
+		player.draw(forestMap.getCameraX(), forestMap.getCameraY());
 
-				   Rect nearZone = { DEEP_NEAR_X, DEEP_NEAR_Y, DEEP_NEAR_W, DEEP_NEAR_H };
+		Rect nearZone = { DEEP_NEAR_X, DEEP_NEAR_Y, DEEP_NEAR_W, DEEP_NEAR_H };
 
-				   if (!dialogueBox.isActive() && rectanglesOverlap(player.getFeetRect(), nearZone))
-				   {
-					   iSetColor(255, 255, 255);
-					   iText(360, 60, "Something seems to lie in the deeper part of the forest.", GLUT_BITMAP_HELVETICA_18);
-				   }
+		if (!dialogueBox.isActive() && rectanglesOverlap(player.getFeetRect(), nearZone) && !showDeepPrompt)
+		{
+			iSetColor(255, 255, 255);
+			iText(360, 60, "Something seems to lie in the deeper part of the forest.", GLUT_BITMAP_HELVETICA_18);
+		}
 
-				   if (showDeepPrompt && !dialogueBox.isActive())
-				   {
-					   iSetColor(255, 255, 255);
-					   iText(508, 86, "Enter the Deep Forest", GLUT_BITMAP_HELVETICA_18);
-				   }
+		if (showDeepPrompt && !dialogueBox.isActive())
+		{
+			drawTravelPrompt(travelForestImg, travelForestHoverImg);
+		}
 
-				   dialogueBox.draw(mouseX, mouseY);
-				   inventory.draw(mouseX, mouseY);
-				   itemObtained.draw();
+		char coordText[100];
+
+		sprintf_s(
+			coordText,
+			"Player: X=%d Y=%d",
+			player.getX(),
+			player.getY()
+			);
+
+		iSetColor(255, 255, 255);
+		iText(20, 690, coordText, GLUT_BITMAP_HELVETICA_18);
+
+		dialogueBox.draw(mouseX, mouseY);
+		inventory.draw(mouseX, mouseY);
+		itemObtained.draw();
+
 	}
+
 		break;
 
 	case FOREST_TRAIL:
 		forestTrail.draw(player, mouseX, mouseY);
+
+		if (forestTrail.isAtClearing())
+		{
+			if (showingJournalImage)
+			{
+				iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, revealJournalImg);
+			}
+			else
+			{
+				dialogueBox.draw(mouseX, mouseY);
+
+				if (showMoonveilPrompt)
+				{
+					drawTravelPrompt(travelMoonveilImg, travelMoonveilHoverImg);
+				}
+			}
+
+			itemObtained.draw();
+		}
+
 		break;
+
+	case MOONVEIL:
+	// to be added: moonveilMap.draw()
+	break;
+
 	}
 
 	drawFadeOverlay();
@@ -721,6 +904,8 @@ void iPassiveMouseMove(int mx, int my)
 
 void iMouse(int button, int state, int mx, int my)
 {
+	printf("%d, %d\n", mx, my);
+	
 	if (currentState == MAIN_MENU)
 	{
 		int result = mainMenu.mouseClick(button, state, mx, my);
@@ -864,11 +1049,7 @@ void iMouse(int button, int state, int mx, int my)
 			return;
 		}
 
-		double xPct = (double)mx / SCREEN_WIDTH;
-		double yPct = (double)my / SCREEN_HEIGHT;
-
-		if (xPct >= TRAVEL_TEXT_X_MIN && xPct <= TRAVEL_TEXT_X_MAX &&
-			yPct >= TRAVEL_TEXT_Y_MIN && yPct <= TRAVEL_TEXT_Y_MAX)
+		if (overTravelPrompt(mx, my))
 		{
 			enterVillage();
 		}
@@ -904,12 +1085,13 @@ void iMouse(int button, int state, int mx, int my)
 				if (option == 1)
 				{
 					inventory.giveHoodedGift();
-					npc1Step = 6;
-					dialogueBox.startDialogue("Hooded Man", npc1ReceiveLines, 1, false, hoodedManBoxImg);
+					npc1Step = 8;
+					dialogueBox.close();
+					itemObtained.show(inventory.getHoodedGiftIcon());
 				}
 				else if (option == 2)
 				{
-					npc1Step = 6;
+					npc1Step = 8;
 					dialogueBox.startDialogue("Hooded Man", npc1RejectLines, 1, false, hoodedManBoxImg);
 				}
 
@@ -928,16 +1110,20 @@ void iMouse(int button, int state, int mx, int my)
 					case 1: npc1Step = 2; dialogueBox.startDialogue("Hooded Man", npc1Lines2, 1, false, hoodedManBoxImg); break;
 					case 2: npc1Step = 3; dialogueBox.startDialogue(nameInput.getName(), mcNpc1Lines2, 1, true); break;
 					case 3: npc1Step = 4; dialogueBox.startDialogue("Hooded Man", npc1Lines3, 1, false, hoodedManBoxImg); break;
-					case 4: npc1Step = 5; dialogueBox.startOptions(npc1Option1, npc1Option2); break;
+					case 4: npc1Step = 5; dialogueBox.startDialogue(nameInput.getName(), mcNpc1Lines3, 1, true); break;
+					case 5: npc1Step = 6; dialogueBox.startDialogue("Hooded Man", npc1Lines4, 3, false, hoodedManBoxImg); break;
+					case 6: npc1Step = 7; dialogueBox.startOptions(npc1Option1, npc1Option2); break;
 					}
 				}
 				else if (activeVillageNpc == 2)
 				{
 					switch (npc2Step)
 					{
-					case 0: npc2Step = 1; dialogueBox.startDialogue(nameInput.getName(), mcNpc2Lines1, 1, true); break;
-					case 1: npc2Step = 2; dialogueBox.startDialogue("Villager", npc2Lines2, 1, false, villagerBoxImg); break;
+					case 0: npc2Step = 1; dialogueBox.startDialogue(nameInput.getName(), mcNpc2Lines1, 2, true); break;
+					case 1: npc2Step = 2; dialogueBox.startDialogue("Villager", npc2Lines2, 2, false, villagerBoxImg); break;
 					case 2: npc2Step = 3; dialogueBox.startDialogue(nameInput.getName(), mcNpc2Lines2, 1, true); break;
+					case 3: npc2Step = 4; dialogueBox.startDialogue("Villager", npc2Lines3, 1, false, villagerBoxImg); break;
+					case 4: npc2Step = 5; dialogueBox.startDialogue(nameInput.getName(), mcNpc2Lines3, 1, true); break;
 					}
 				}
 			}
@@ -982,6 +1168,13 @@ void iMouse(int button, int state, int mx, int my)
 	{
 		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN)
 		{
+			return;
+		}
+
+		if (showSilverleafPrompt && overTravelPrompt(mx, my))
+		{
+			showSilverleafPrompt = false;
+			enterForest();
 			return;
 		}
 
@@ -1088,7 +1281,7 @@ void iMouse(int button, int state, int mx, int my)
 
 				case 106:
 					restaurantStep = 107;
-					enterForest();
+					showSilverleafPrompt = true;
 					break;
 
 				}
@@ -1207,9 +1400,7 @@ void iMouse(int button, int state, int mx, int my)
 			return;
 		}
 
-		if (showDeepPrompt &&
-			mx >= DEEP_PROMPT_X_MIN && mx <= DEEP_PROMPT_X_MAX &&
-			my >= DEEP_PROMPT_Y_MIN && my <= DEEP_PROMPT_Y_MAX)
+		if (showDeepPrompt && overTravelPrompt(mx, my))
 		{
 			enterForestTrail();
 			return;
@@ -1250,10 +1441,71 @@ void iMouse(int button, int state, int mx, int my)
 
 	if (currentState == FOREST_TRAIL)
 	{
-		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+
+		if (!forestTrail.isAtClearing())
 		{
 			forestTrail.handleClick(player, mx, my);
+			return;
 		}
+
+		if (itemObtained.getIsActive())
+		{
+			itemObtained.hide();
+			clearingStep = 6;
+			showMoonveilPrompt = true;
+			return;
+		}
+
+		if (showingJournalImage)
+		{
+			showingJournalImage = false;
+			clearingStep = 3;
+			dialogueBox.startDialogue(nameInput.getName(), clearingLines2, CLEARING_LINE_COUNT_2, true);
+			return;
+		}
+
+		if (dialogueBox.isActive())
+		{
+			dialogueBox.advance();
+
+			if (!dialogueBox.isActive())
+			{
+				if (clearingStep == 0)
+				{
+					clearingStep = 1;
+				}
+				else if (clearingStep == 3)
+				{
+					clearingStep = 5;
+					inventory.giveStarwheel();
+					itemObtained.show(inventory.getStarwheelIcon());
+				}
+			}
+
+			return;
+		}
+
+		if (clearingStep == 1)
+		{
+			Rect objRect = { CLEARING_OBJ_X, CLEARING_OBJ_Y, CLEARING_OBJ_W, CLEARING_OBJ_H };
+			Rect mouseRect = { mx, my, 1, 1 };
+
+			if (rectanglesOverlap(objRect, mouseRect))
+			{
+				clearingStep = 2;
+				showingJournalImage = true;
+			}
+
+			return;
+		}
+
+		if (clearingStep == 6 && overTravelPrompt(mx, my))
+		{
+			enterMoonveil();
+			return;
+		}
+
 		return;
 	}
 
@@ -1357,8 +1609,19 @@ void fixedUpdate()
 		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
 		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
 
-		player.handleInput(up, down, left, right, forestTrail.getMap());
-		forestTrail.getMap().updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		bool frozen =
+			forestTrail.isTitleCardShowing() ||
+			dialogueBox.isActive() ||
+			showingJournalImage ||
+			itemObtained.getIsActive() ||
+			showMoonveilPrompt;
+
+		if (!frozen)
+		{
+			player.handleInput(up, down, left, right, forestTrail.getMap());
+		}
+
+		forestTrail.updateCamera(player);
 
 		return;
 	}
@@ -1368,6 +1631,15 @@ void fixedUpdate()
 void update()
 {
 	updateFade();
+
+	if (currentState == TITLE_CARD && fadePhase == FADE_NONE)
+	{
+		titleTick++;
+		if (titleTick >= TITLE_HOLD) requestFade(titlePendingState);
+	}
+
+	itemObtained.update();
+	dialogueBox.update();
 	fixedUpdate();
 	player.updateAnimation();
 
@@ -1383,7 +1655,7 @@ void update()
 
 		if (cookingGame.isRetryRequested())
 		{
-			cookingGame.start();
+			cookingGame.start(inventory.getHasHoodedGift());
 			return;
 		}
 
@@ -1402,7 +1674,7 @@ void update()
 
 		if (servingGame.isRetryRequested())
 		{
-			servingGame.start();
+			servingGame.start(inventory.getHasHoodedGift());
 			return;
 		}
 
@@ -1412,6 +1684,14 @@ void update()
 	if (currentState == FOREST_TRAIL)
 	{
 		forestTrail.update(player);
+
+		if (forestTrail.takeClearingArrived())
+		{
+			clearingStep = 0;
+			showingJournalImage = false;
+			showMoonveilPrompt = false;
+			dialogueBox.startDialogue(nameInput.getName(), clearingLines1, CLEARING_LINE_COUNT_1, true);
+		}
 
 		if (forestTrail.isFinished())
 		{
@@ -1423,6 +1703,7 @@ void update()
 		{
 			forestTrail.start(inventory.getHasCompass());
 			player.init(FOREST_SPAWN_X, FOREST_SPAWN_Y);
+			forestTrail.updateCamera(player);
 			return;
 		}
 
@@ -1441,6 +1722,7 @@ int main()
 	credits.loadImages();
 	nameInput.loadImages();
 	inventory.loadImages();
+	itemObtained.loadImages();
 	cookingGame.loadImages();
 	servingGame.loadImages();
 
@@ -1457,9 +1739,9 @@ int main()
 	villageMap.addObstacle(0, 1552, 3200, 248);  // top stone wall + everything above it
 	villageMap.addObstacle(2683, 890, 517, 662);  // right rock formation
 	villageMap.addObstacle(0, 1243, 1348, 308);  // lake upper part, waterfall, upper house
-	villageMap.addObstacle(1453, 1263, 1140, 288);  // grass between the two upper paths
-	villageMap.addObstacle(1453, 1190, 678, 73);
-	villageMap.addObstacle(2227, 1190, 367, 73);
+	villageMap.addObstacle(1453, 1333, 1140, 218);  // grass between the two upper paths
+	villageMap.addObstacle(1453, 1190, 678, 143);
+	villageMap.addObstacle(2227, 1190, 367, 143);
 	villageMap.addObstacle(0, 1190, 778, 53);
 	villageMap.addObstacle(875, 1190, 473, 53);
 	villageMap.addObstacle(0, 1122, 510, 68);  // lake edge above the big bridge
@@ -1478,6 +1760,12 @@ int main()
 	villageMap.addObstacle(760, 0, 1053, 298);
 	villageMap.addObstacle(1943, 0, 798, 218);
 	villageMap.addObstacle(2742, 0, 80, 217);
+	villageMap.addObstacle(187, 1086, 60, 30);
+	villageMap.addObstacle(2425, 315, 60, 30);
+	villageMap.addObstacle(2610, 1045, 72, 62);
+	villageMap.addObstacle(2560, 1045, 50, 35);
+	villageMap.addObstacle(0, 1024, 516, 65); // big bridge railing
+	villageMap.addObstacle(404, 323, 215, 78); // small bridge railing
 
 	forestTrail.loadImages();
 
@@ -1487,27 +1775,28 @@ int main()
 	forestMap.addObstacle(0, 1384, 1630, 586);
 	forestMap.addObstacle(1746, 1384, 2094, 586);
 	forestMap.addObstacle(0, 644, 670, 740);
-	forestMap.addObstacle(670, 644, 80, 652);
-	forestMap.addObstacle(862, 644, 424, 652);
-	forestMap.addObstacle(1354, 644, 942, 652);
-	forestMap.addObstacle(2390, 1012, 730, 284);
+	forestMap.addObstacle(670, 644, 98, 652);
+	forestMap.addObstacle(862, 644, 424, 700);
+	forestMap.addObstacle(1354, 644, 942, 672);
+	forestMap.addObstacle(2390, 1012, 730, 327);
 	forestMap.addObstacle(3120, 1012, 720, 372);
 	forestMap.addObstacle(2390, 460, 860, 480);
 	forestMap.addObstacle(3250, 460, 590, 552);
 	forestMap.addObstacle(0, 0, 556, 644);
-	forestMap.addObstacle(556, 0, 194, 536);
+	forestMap.addObstacle(556, 0, 194, 588);
 	forestMap.addObstacle(862, 0, 1434, 536);
 	forestMap.addObstacle(2390, 0, 1054, 364);
 	forestMap.addObstacle(3444, 0, 396, 460);
+	forestMap.addObstacle(736, 1030, 160, 149);
+	forestMap.addObstacle(1396, 1313, 64, 31);
+	forestMap.addObstacle(1985, 1297, 55, 41);
+	forestMap.addObstacle(2281, 754, 112, 82);
 
 	forestWarden.init(WARDEN_X, WARDEN_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Forest Warden");
 	forestWarden.loadImage("Images//idle_forest_warden.png");
 
 	herbalist.init(HERBALIST_X, HERBALIST_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Herbalist");
 	herbalist.loadImage("Images//idle_herbalist.png");
-
-	wardenBoxImg = iLoadImage("Images//dialogue_box_forest_warden.png");
-	herbalistBoxImg = iLoadImage("Images//dialogue_box_herbalist.png");
 
 	king.init(595, 425, PLAYER_WIDTH, PLAYER_HEIGHT, "King");
 	king.loadImage("Images//king.png");
@@ -1519,14 +1808,38 @@ int main()
 	npc2.loadImage("Images//idle_npc_2.png");
 
 	noteAndPendantImg = iLoadImage("Images//note_and_pendant.png");
+	revealJournalImg = iLoadImage("Images//reveal_journal_page.png");
 
 	restaurantNpc.init(RESTAURANT_NPC_X, RESTAURANT_NPC_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Restaurant Owner");
 	restaurantNpc.loadImage("Images//idle_npc_3.png");
+
+	restaurantMap.addObstacle(113, 55, 96, 16);
+	restaurantMap.addObstacle(52, 69, 222, 163);
+	restaurantMap.addObstacle(93, 206, 207, 135);
+	restaurantMap.addObstacle(0, 218, 79, 161);
+	restaurantMap.addObstacle(0, 379, 722, 338);
+	restaurantMap.addObstacle(705, 245, 575, 475);
+	restaurantMap.addObstacle(444, 167, 91, 26);
+	restaurantMap.addObstacle(396, 183, 197, 152);
+	restaurantMap.addObstacle(737, 40, 102, 13);
+	restaurantMap.addObstacle(677, 61, 234, 155);
+	restaurantMap.addObstacle(1250, 163, 29, 88);
+
+	travelEmberfallImg = iLoadImage("Images//travel_emberfall.png");
+	travelEmberfallHoverImg = iLoadImage("Images//hover_travel_emberfall.png");
+	travelForestImg = iLoadImage("Images//travel_forest.png");
+	travelForestHoverImg = iLoadImage("Images//hover_travel_forest.png");
+	travelSilverleafImg = iLoadImage("Images//travel_silverleaf.png");
+	travelSilverleafHoverImg = iLoadImage("Images//hover_travel_silverleaf.png");
+	travelMoonveilImg = iLoadImage("Images//travel_moonveil.png");
+	travelMoonveilHoverImg = iLoadImage("Images//hover_travel_moonveil.png");
 
 	kingBoxImg = iLoadImage("Images//dialogue_box_king.png");
 	villagerBoxImg = iLoadImage("Images//dialogue_box_villager.png");
 	hoodedManBoxImg = iLoadImage("Images//dialogue_box_hooded_man.png");
 	restaurantOwnerBoxImg = iLoadImage("Images//dialogue_box_restaurant_owner.png");
+	wardenBoxImg = iLoadImage("Images//dialogue_box_forest_warden.png");
+	herbalistBoxImg = iLoadImage("Images//dialogue_box_herbalist.png");
 	
 	iStart();
 	return 0;

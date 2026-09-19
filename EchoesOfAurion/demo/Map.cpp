@@ -4,7 +4,8 @@
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int img);
 
-// void iRectangle(int x, int y, int width, int height);
+void iRectangle(double left, double bottom, double dx, double dy);
+void iSetColor(double r, double g, double b);
 
 void Map::init(char imagePath[], int worldWidth, int worldHeight, bool isScrollable)
 {
@@ -108,5 +109,15 @@ void Map::draw()
 
 }
 
-int Map::getCameraX() { return cameraX; }
-int Map::getCameraY() { return cameraY; }
+int Map::getCameraX()
+{
+	return cameraX;
+}
+int Map::getCameraY()
+{
+	return cameraY;
+}
+void Map::setCameraY(int y)
+{
+	cameraY = y;
+}

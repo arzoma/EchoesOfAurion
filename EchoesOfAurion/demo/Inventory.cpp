@@ -11,14 +11,14 @@ void iText(double x, double y, char *str, void *font);
 
 const int ICON_X = 1180, ICON_Y = 630, ICON_SIZE = 70;
 
-const int SLOT_X0 = 260, SLOT_X1 = 350, SLOT_X2 = 440;
+const int SLOT_X0 = 260, SLOT_X1 = 355, SLOT_X2 = 445, SLOT_X3 = 535;;
 const int SLOT_Y = 445;
 const int SLOT_SIZE = 64;
 
-const int PREVIEW_X = 665, PREVIEW_Y = 170, PREVIEW_SIZE = 360;
-const int NAME_TEXT_X = 768, NAME_TEXT_Y = 150;
+const int PREVIEW_X = 645, PREVIEW_Y = 158, PREVIEW_SIZE = 398;
+const int NAME_TEXT_X = 768, NAME_TEXT_Y = 163;
 
-const int CLOSE_X = 1088, CLOSE_Y = 560, CLOSE_SIZE = 64;
+const int CLOSE_X = 1064, CLOSE_Y = 567, CLOSE_SIZE = 58;
 
 void Inventory::loadImages()
 {
@@ -27,12 +27,15 @@ void Inventory::loadImages()
 	windowImage = iLoadImage("Images//inventory_window.png");
 
 	pendantIcon = iLoadImage("Images//pendant.png");
-	hoodedGiftIcon = iLoadImage("Images//pendant.png"); // placeholder
+	hoodedGiftIcon = iLoadImage("Images//hearth_ember.png");
 	compassIcon = iLoadImage("Images//forest_compass.png");
-	hasCompass = false;
+	starwheelIcon = iLoadImage("Images//starwheel.png");
 
 	hasPendant = false;
 	hasHoodedGift = false;
+	hasCompass = false;
+	hasStarwheel = false;
+
 	selectedItem = 0;
 	isOpen = false;
 }
@@ -60,9 +63,29 @@ int  Inventory::getCompassIcon()
 	return compassIcon;
 }
 
+void Inventory::giveStarwheel()
+{
+	hasStarwheel = true;
+}
+
+bool Inventory::getHasStarwheel()
+{
+	return hasStarwheel;
+}
+
+int Inventory::getStarwheelIcon()
+{
+	return starwheelIcon;
+}
+
 int Inventory::getHoodedGiftIcon()
 {
 	return hoodedGiftIcon;
+}
+
+bool Inventory::getHasHoodedGift()
+{
+	return hasHoodedGift;
 }
 
 bool Inventory::getIsOpen()
@@ -98,6 +121,10 @@ bool Inventory::handleClick(int mx, int my)
 		if (hasCompass && isInsideBox(mx, my, SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 3;
+		}
+		if (hasStarwheel && isInsideBox(mx, my, SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		{
+			selectedItem = 4;
 		}
 
 		return true;
@@ -138,6 +165,10 @@ void Inventory::draw(int mouseX, int mouseY)
 	{
 		iShowImage(SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE, compassIcon);
 	}
+	if (hasStarwheel)
+	{
+		iShowImage(SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE, starwheelIcon);
+	}
 
 	if (selectedItem != 0)
 	{
@@ -146,6 +177,7 @@ void Inventory::draw(int mouseX, int mouseY)
 
 		if (selectedItem == 2) { previewIcon = hoodedGiftIcon; name = "Hearth Ember"; }
 		else if (selectedItem == 3) { previewIcon = compassIcon; name = "Forest Compass"; }
+		else if (selectedItem == 4) { previewIcon = starwheelIcon; name = "Guardian's Starwheel"; }
 
 		iShowImage(PREVIEW_X, PREVIEW_Y, PREVIEW_SIZE, PREVIEW_SIZE, previewIcon);
 
