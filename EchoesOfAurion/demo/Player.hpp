@@ -13,7 +13,10 @@ enum Direction
 
 const int PLAYER_WIDTH = 90;
 const int PLAYER_HEIGHT = 120;
-const int PLAYER_SPEED = 3;
+const int PLAYER_SPEED_X100 = 250;
+
+const int PLAYER_FEET_W = 40;
+const int PLAYER_FEET_H = 24;
 
 class Player
 {
@@ -47,11 +50,14 @@ private:
 	// walking animation
 	int walkFrame;
 	int walkTimer;
+	int speedAcc;
 
 	// blink animation (front idle only)
 	// 0 = normal, 1 = half-closed, 2 = fully closed, 3 = half-closed (opening)
 	int blinkState;
 	int blinkTimer;
+
+	Rect feetRectAt(int px, int py);
 
 public:
 
@@ -69,6 +75,7 @@ public:
 	int getX();
 	int getY();
 	Rect getRect();
+	Rect getFeetRect();
 
 };
 

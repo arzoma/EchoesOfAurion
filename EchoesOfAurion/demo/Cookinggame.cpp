@@ -9,6 +9,8 @@ void iSetColor(double r, double g, double b);
 void iText(double x, double y, char *str, void *font);
 void iRectangle(double x, double y, double width, double height);
 
+extern float g_imgAlpha;
+
 #define GLUT_BITMAP_HELVETICA_18 ((void*)8)
 
 // dish order: 0=soup, 1=grilled_meat, 2=bread, 3=pie, 4=cake
@@ -22,25 +24,34 @@ static const int DISH_INGREDIENTS[5][3] =
 	{ 5, 4, 1 }  // cake: flour, sugar, carrot
 };
 
-static const double TIME_TEXT_X = 0.10, TIME_TEXT_Y = 0.90;
-static const double SCORE_TEXT_X = 0.75, SCORE_TEXT_Y = 0.90;
+static const int TIME_TEXT_X = 187, TIME_TEXT_Y = 663;
+static const int SCORE_TEXT_X = 952, SCORE_TEXT_Y = 662;
+static const int MISTAKES_TEXT_X = 952, MISTAKES_TEXT_Y = 590;
 
-static const double DISH_ICON_X = 0.29, DISH_ICON_Y = 0.62, DISH_ICON_SIZE = 0.11;
+static const int DISH_ICON_X = 335, DISH_ICON_Y = 416, DISH_ICON_SIZE = 130;
 
-static const double NEEDED_SLOT_X[3] = { 0.215, 0.275, 0.335 };
-static const double NEEDED_SLOT_Y = 0.48;
-static const double NEEDED_SLOT_SIZE = 0.045;
+static const int NEEDED_SLOT_X[3] = { 276, 370, 463 };
+static const int NEEDED_SLOT_Y = 318;
+static const int NEEDED_SLOT_SIZE = 62;
 
-static const double INGREDIENT_SLOT_X[7] = { 0.078, 0.175, 0.272, 0.369, 0.466, 0.563, 0.660 };
-static const double INGREDIENT_SLOT_Y = 0.26;
-static const double INGREDIENT_SLOT_SIZE = 0.065;
+static const int INGREDIENT_SLOT_X[7] = { 63, 184, 305, 426, 547, 668, 789 };
+static const int INGREDIENT_SLOT_Y = 158;
+static const int INGREDIENT_SLOT_SIZE = 82;
 
-static const double COOK_BUTTON_X = 0.585, COOK_BUTTON_Y = 0.076, COOK_BUTTON_W = 0.12, COOK_BUTTON_H = 0.06;
+static const int CHOP_SLOT_X[3] = { 296, 428, 560 };
+static const int CHOP_SLOT_Y = 62;
+static const int CHOP_SLOT_SIZE = 72;
 
-static const double MC_X = 0.72, MC_Y = 0.15, MC_W = 0.22, MC_H = 0.60;
-static const double POT_X = 0.735, POT_Y = 0.18, POT_SIZE = 0.13;
+static const int COOK_BUTTON_X = 728, COOK_BUTTON_Y = 51;
+static const int COOK_BUTTON_W = 175, COOK_BUTTON_H = 52;
 
-static const double RESULT_BUTTON_X = 0.40, RESULT_BUTTON_Y = 0.30, RESULT_BUTTON_W = 0.20, RESULT_BUTTON_H = 0.08;
+static const int MC_X = 922, MC_Y = 57, MC_W = 324, MC_H = 432;
+static const int POT_X = 946, POT_Y = 100, POT_SIZE = 146;
+
+static const int RESULT_BUTTON_X = 488, RESULT_BUTTON_Y = 238;
+static const int RESULT_BUTTON_W = 300, RESULT_BUTTON_H = 60;
+
+static const int RESULT_FADE_TICKS = 40;
 
 void CookingGame::loadImages()
 {
@@ -49,6 +60,7 @@ void CookingGame::loadImages()
 	ingredientsListImg = iLoadImage("Images//cooking_ingredients_list.png");
 	neededDishImg = iLoadImage("Images//needed_dish.png");
 	cookButtonImg = iLoadImage("Images//cook_button.png");
+	cookButtonHoverImg = iLoadImage("Images//hover_cook_button.png");
 
 	mcIdle = iLoadImage("Images//mc_cooking_idle.png");
 	mcHand = iLoadImage("Images//mc_cooking_hand.png");
@@ -70,16 +82,25 @@ void CookingGame::loadImages()
 
 	successImg = iLoadImage("Images//success.png");
 	failedImg = iLoadImage("Images//failed.png");
+	hoverSuccessImg = iLoadImage("Images//hover_success.png");
+	hoverFailedImg = iLoadImage("Images//hover_failed.png");
 }
 
-void CookingGame::start()
+void CookingGame::start(bool hasPerk)
 {
 	phase = COOKING_PLAYING;
 	timeLeftTicks = COOKING_TIME_LIMIT_TICKS;
+	resultTicks = 0;
 	score = 0;
 	mistakes = 0;
 	finished = false;
 	retryRequested = false;
+	targetDishes = hasPerk ? COOKING_TARGET_DISHES_WITH_PERK : COOKING_TARGET_DISHES;
+
+	animTimer = 0;
+	animFrame = 0;
+	lastAttemptCorrect = false;
+
 	pickNewDish();
 }
 
@@ -87,7 +108,37 @@ void CookingGame::pickNewDish()
 {
 	currentDish = rand() % 5;
 	selectedCount = 0;
-	for (int i = 0; i < 7; i++) selected[i] = false;
+	for (int i = 0; i < 3; i++) picks[i] = -1;
+}
+
+bool CookingGame::isSelected(int ingredient)
+{
+	for (int i = 0; i < selectedCount; i++)
+	{
+		if (picks[i] == ingredient) return true;
+	}
+	return false;
+}
+
+void CookingGame::togglePick(int ingredient)
+{
+	for (int i = 0; i < selectedCount; i++)
+	{
+		if (picks[i] == ingredient)
+		{
+			// shuffle the rest down so the board stays left-aligned
+			for (int j = i; j < selectedCount - 1; j++) picks[j] = picks[j + 1];
+			selectedCount--;
+			picks[selectedCount] = -1;
+			return;
+		}
+	}
+
+	if (selectedCount < 3)
+	{
+		picks[selectedCount] = ingredient;
+		selectedCount++;
+	}
 }
 
 bool CookingGame::checkSelection()
@@ -95,13 +146,11 @@ bool CookingGame::checkSelection()
 	bool matched[3] = { false, false, false };
 	int matchCount = 0;
 
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < selectedCount; i++)
 	{
-		if (!selected[i]) continue;
-
 		for (int j = 0; j < 3; j++)
 		{
-			if (!matched[j] && DISH_INGREDIENTS[currentDish][j] == i)
+			if (!matched[j] && DISH_INGREDIENTS[currentDish][j] == picks[i])
 			{
 				matched[j] = true;
 				matchCount++;
@@ -115,14 +164,14 @@ bool CookingGame::checkSelection()
 
 void CookingGame::getIngredientSlotPos(int i, int &x, int &y)
 {
-	x = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_X[i]);
-	y = (int)(SCREEN_HEIGHT * INGREDIENT_SLOT_Y);
+	x = INGREDIENT_SLOT_X[i];
+	y = INGREDIENT_SLOT_Y;
 }
 
 void CookingGame::getNeededSlotPos(int j, int &x, int &y)
 {
-	x = (int)(SCREEN_WIDTH * NEEDED_SLOT_X[j]);
-	y = (int)(SCREEN_HEIGHT * NEEDED_SLOT_Y);
+	x = NEEDED_SLOT_X[j];
+	y = NEEDED_SLOT_Y;
 }
 
 bool CookingGame::isInsideBox(int mx, int my, int bx, int by, int bw, int bh)
@@ -138,7 +187,7 @@ void CookingGame::update()
 		if (timeLeftTicks <= 0)
 		{
 			timeLeftTicks = 0;
-			phase = COOKING_SUCCESS;
+			phase = COOKING_FAILED;
 		}
 		return;
 	}
@@ -156,6 +205,11 @@ void CookingGame::update()
 			if (lastAttemptCorrect)
 			{
 				score++;
+				if (score >= targetDishes)
+				{
+					phase = COOKING_SUCCESS;
+					return;
+				}
 			}
 			else
 			{
@@ -175,20 +229,22 @@ void CookingGame::update()
 
 void CookingGame::handleClick(int mx, int my)
 {
-	int rx = (int)(SCREEN_WIDTH * RESULT_BUTTON_X);
-	int ry = (int)(SCREEN_HEIGHT * RESULT_BUTTON_Y);
-	int rw = (int)(SCREEN_WIDTH * RESULT_BUTTON_W);
-	int rh = (int)(SCREEN_HEIGHT * RESULT_BUTTON_H);
 
 	if (phase == COOKING_SUCCESS)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) finished = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{
+			finished = true;
+		}
 		return;
 	}
 
 	if (phase == COOKING_FAILED)
 	{
-		if (isInsideBox(mx, my, rx, ry, rw, rh)) retryRequested = true;
+		if (isInsideBox(mx, my, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H))
+		{	
+			retryRequested = true;
+		}
 		return;
 	}
 
@@ -197,94 +253,123 @@ void CookingGame::handleClick(int mx, int my)
 		return;
 	}
 
-	int slotSize = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_SIZE);
 	for (int i = 0; i < 7; i++)
 	{
 		int sx, sy;
 		getIngredientSlotPos(i, sx, sy);
 
-		if (isInsideBox(mx, my, sx, sy, slotSize, slotSize))
+		if (isInsideBox(mx, my, sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE))
 		{
-			if (selected[i])
 			{
-				selected[i] = false;
-				selectedCount--;
+				togglePick(i);
+				return;
 			}
-			else if (selectedCount < 3)
-			{
-				selected[i] = true;
-				selectedCount++;
-			}
-			return;
 		}
-	}
 
-	int cbX = (int)(SCREEN_WIDTH * COOK_BUTTON_X);
-	int cbY = (int)(SCREEN_HEIGHT * COOK_BUTTON_Y);
-	int cbW = (int)(SCREEN_WIDTH * COOK_BUTTON_W);
-	int cbH = (int)(SCREEN_HEIGHT * COOK_BUTTON_H);
+		for (int i = 0; i < selectedCount; i++)
+		{
+			if (isInsideBox(mx, my, CHOP_SLOT_X[i], CHOP_SLOT_Y, CHOP_SLOT_SIZE, CHOP_SLOT_SIZE))
+			{
+				togglePick(picks[i]);
+				return;
+			}
+		}
 
-	if (isInsideBox(mx, my, cbX, cbY, cbW, cbH) && selectedCount == 3)
-	{
-		lastAttemptCorrect = checkSelection();
-		phase = COOKING_ANIM;
-		animTimer = 60;
-		animFrame = 0;
+		if (isInsideBox(mx, my, COOK_BUTTON_X, COOK_BUTTON_Y, COOK_BUTTON_W, COOK_BUTTON_H) && selectedCount == 3)
+		{
+			lastAttemptCorrect = checkSelection();
+			phase = COOKING_ANIM;
+			animTimer = 60;
+			animFrame = 0;
+		}
+
 	}
 }
 
-void CookingGame::draw()
+void CookingGame::draw(int mouseX, int mouseY)
 {
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, bg);
 
 	int mcImg = (phase == COOKING_ANIM && animFrame == 1) ? mcHand : mcIdle;
-	iShowImage((int)(SCREEN_WIDTH * MC_X), (int)(SCREEN_HEIGHT * MC_Y),
-		(int)(SCREEN_WIDTH * MC_W), (int)(SCREEN_HEIGHT * MC_H), mcImg);
-	iShowImage((int)(SCREEN_WIDTH * POT_X), (int)(SCREEN_HEIGHT * POT_Y),
-		(int)(SCREEN_WIDTH * POT_SIZE), (int)(SCREEN_WIDTH * POT_SIZE), pot);
+	iShowImage(MC_X, MC_Y, MC_W, MC_H, mcImg);
+	iShowImage(POT_X, POT_Y, POT_SIZE, POT_SIZE, pot);
 
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, timeAndScoreImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ingredientsListImg);
 	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, neededDishImg);
-	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, cookButtonImg);
 
-	int slotSize = (int)(SCREEN_WIDTH * INGREDIENT_SLOT_SIZE);
+	bool hoveringCook = phase == COOKING_PLAYING && isInsideBox(mouseX, mouseY, COOK_BUTTON_X, COOK_BUTTON_Y, COOK_BUTTON_W, COOK_BUTTON_H);
+	iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hoveringCook ? cookButtonHoverImg : cookButtonImg);
+
 	for (int i = 0; i < 7; i++)
 	{
 		int sx, sy;
 		getIngredientSlotPos(i, sx, sy);
-		iShowImage(sx, sy, slotSize, slotSize, ingredientImages[i]);
+		iShowImage(sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE, ingredientImages[i]);
 
-		if (selected[i])
+		if (isSelected(i))
 		{
 			iSetColor(255, 255, 255);
-			iRectangle(sx, sy, slotSize, slotSize);
+			iRectangle(sx, sy, INGREDIENT_SLOT_SIZE, INGREDIENT_SLOT_SIZE);
 		}
 	}
 
-	iShowImage((int)(SCREEN_WIDTH * DISH_ICON_X), (int)(SCREEN_HEIGHT * DISH_ICON_Y),
-		(int)(SCREEN_WIDTH * DISH_ICON_SIZE), (int)(SCREEN_WIDTH * DISH_ICON_SIZE), dishImages[currentDish]);
+	for (int i = 0; i < selectedCount; i++)
+	{
+		iShowImage(CHOP_SLOT_X[i], CHOP_SLOT_Y, CHOP_SLOT_SIZE, CHOP_SLOT_SIZE, ingredientImages[picks[i]]);
+	}
 
-	int neededSize = (int)(SCREEN_WIDTH * NEEDED_SLOT_SIZE);
+	iShowImage(DISH_ICON_X, DISH_ICON_Y, DISH_ICON_SIZE, DISH_ICON_SIZE, dishImages[currentDish]);
+
 	for (int j = 0; j < 3; j++)
 	{
 		int nx, ny;
 		getNeededSlotPos(j, nx, ny);
-		iShowImage(nx, ny, neededSize, neededSize, ingredientImages[DISH_INGREDIENTS[currentDish][j]]);
+		iShowImage(nx, ny, NEEDED_SLOT_SIZE, NEEDED_SLOT_SIZE, ingredientImages[DISH_INGREDIENTS[currentDish][j]]);
 	}
 
-	char timeText[20], scoreText[20];
+	char timeText[20], scoreText[50], mistakeText[50];
 	int secondsLeft = timeLeftTicks / 100;
 	sprintf_s(timeText, "%02d:%02d", secondsLeft / 60, secondsLeft % 60);
-	sprintf_s(scoreText, "Score: %d", score);
+	sprintf_s(scoreText, "Score: %d Target: %d", score, targetDishes);
+	sprintf_s(mistakeText, "Mistakes: %d/%d", mistakes, COOKING_MAX_MISTAKES);
 
 	iSetColor(255, 255, 255);
-	iText(SCREEN_WIDTH * TIME_TEXT_X, SCREEN_HEIGHT * TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
-	iText(SCREEN_WIDTH * SCORE_TEXT_X, SCREEN_HEIGHT * SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
+	iText(TIME_TEXT_X, TIME_TEXT_Y, timeText, GLUT_BITMAP_HELVETICA_18);
+	iText(SCORE_TEXT_X, SCORE_TEXT_Y, scoreText, GLUT_BITMAP_HELVETICA_18);
+	iText(MISTAKES_TEXT_X, MISTAKES_TEXT_Y, mistakeText, GLUT_BITMAP_HELVETICA_18);
 
-	if (phase == COOKING_SUCCESS) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, successImg);
-	else if (phase == COOKING_FAILED) iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);
+	bool hoveringSuccess = phase == COOKING_SUCCESS && isInsideBox(mouseX, mouseY, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H);
+	bool hoveringFailed = phase == COOKING_FAILED && isInsideBox(mouseX, mouseY, RESULT_BUTTON_X, RESULT_BUTTON_Y, RESULT_BUTTON_W, RESULT_BUTTON_H);
+
+	if (phase == COOKING_SUCCESS){
+		if (hoveringSuccess){
+			iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hoverSuccessImg);
+		}
+		else{
+			iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, successImg);
+		}
+	}
+	else if (phase == COOKING_FAILED){
+		if (hoveringFailed){
+			iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hoverFailedImg);
+		}
+		else{
+			iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, failedImg);
+		}
+	}
 }
 
-bool CookingGame::isFinished() { return finished; }
-bool CookingGame::isRetryRequested() { return retryRequested; }
+bool CookingGame::isFinished()
+{
+	if (!finished) return false;
+	finished = false;
+	return true;
+}
+
+bool CookingGame::isRetryRequested()
+{
+	if (!retryRequested) return false;
+	retryRequested = false;
+	return true;
+}

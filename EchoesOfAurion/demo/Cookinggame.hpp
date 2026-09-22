@@ -9,8 +9,11 @@ enum CookingPhase
 	COOKING_FAILED
 };
 
-const int COOKING_TIME_LIMIT_TICKS = 18000; // 3 minutes at a 10ms tick
+const int COOKING_TIME_LIMIT_TICKS = 6000; // 1 minute at a 10ms tick
 const int COOKING_MAX_MISTAKES = 3;
+
+const int COOKING_TARGET_DISHES = 15;
+const int COOKING_TARGET_DISHES_WITH_PERK = 10;
 
 class CookingGame
 {
@@ -22,6 +25,7 @@ private:
 	int ingredientsListImg;
 	int neededDishImg;
 	int cookButtonImg;
+	int cookButtonHoverImg;
 
 	int mcIdle;
 	int mcHand;
@@ -32,6 +36,8 @@ private:
 
 	int successImg;
 	int failedImg;
+	int hoverSuccessImg;
+	int hoverFailedImg;
 
 	CookingPhase phase;
 
@@ -39,8 +45,12 @@ private:
 	int score;
 	int mistakes;
 
+	int targetDishes;
+
+	int resultTicks;
+
 	int currentDish;
-	bool selected[7];
+	int picks[3];
 	int selectedCount;
 
 	int animTimer;
@@ -52,6 +62,8 @@ private:
 
 	void pickNewDish();
 	bool checkSelection();
+	bool isSelected(int ingredient);
+	void togglePick(int ingredient);
 	void getIngredientSlotPos(int i, int &x, int &y);
 	void getNeededSlotPos(int j, int &x, int &y);
 	bool isInsideBox(int mx, int my, int bx, int by, int bw, int bh);
@@ -59,10 +71,10 @@ private:
 public:
 
 	void loadImages();
-	void start();
+	void start(bool hasPerk = false);
 
 	void update();
-	void draw();
+	void draw(int mouseX, int mouseY);
 
 	void handleClick(int mx, int my);
 

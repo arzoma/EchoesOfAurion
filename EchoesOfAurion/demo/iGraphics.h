@@ -20,6 +20,8 @@
 # include "stb_image.h"
 
 int iScreenHeight, iScreenWidth;
+float g_imgAlpha = 1.0f;
+bool  g_imgAdditive = false;
 int iMouseX, iMouseY;
 int ifft=0;
 void (*iAnimFunction[10])(void)={0};
@@ -177,7 +179,8 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 	glEnable(GL_TEXTURE_2D);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, g_imgAdditive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 1.0f, 1.0f, g_imgAlpha);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -187,7 +190,7 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glBegin(GL_QUADS);
 
@@ -204,6 +207,10 @@ void iShowImage(int x, int y, int width, int height, unsigned int texture)
 		glVertex2f(x, y + height);
 
 	glEnd();
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	g_imgAlpha = 1.0f;
+	g_imgAdditive = false;
 
 	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
