@@ -35,6 +35,7 @@ public:
 
 	char* getName();
 
+	void setName(char* n);
 };
 
 #endif

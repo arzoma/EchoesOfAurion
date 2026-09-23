@@ -65,15 +65,19 @@
     <ClCompile Include="Cookinggame.cpp" />
     <ClCompile Include="Credits.cpp" />
     <ClCompile Include="Dialoguebox.cpp" />
+    <ClCompile Include="FinalFight.cpp" />
     <ClCompile Include="Foresttrail.cpp" />
+    <ClCompile Include="GhostChase.cpp" />
     <ClCompile Include="iMain.cpp" />
     <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="Itemobtained.cpp" />
     <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Map.cpp" />
+    <ClCompile Include="MirrorHall.cpp" />
     <ClCompile Include="Nameinput.cpp" />
     <ClCompile Include="Npc.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="SaveGame.cpp" />
     <ClCompile Include="Servinggame.cpp" />
     <ClCompile Include="Settings.cpp" />
   </ItemGroup>
@@ -82,14 +86,18 @@
     <ClInclude Include="Cookinggame.hpp" />
     <ClInclude Include="Credits.hpp" />
     <ClInclude Include="Dialoguebox.hpp" />
+    <ClInclude Include="FinalFight.hpp" />
     <ClInclude Include="Foresttrail.hpp" />
+    <ClInclude Include="GhostChase.hpp" />
     <ClInclude Include="Inventory.hpp" />
     <ClInclude Include="Itemobtained.hpp" />
     <ClInclude Include="MainMenu.hpp" />
     <ClInclude Include="Map.hpp" />
+    <ClInclude Include="MirrorHall.hpp" />
     <ClInclude Include="Nameinput.hpp" />
     <ClInclude Include="Npc.hpp" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="SaveGame.hpp" />
     <ClInclude Include="Servinggame.hpp" />
     <ClInclude Include="Settings.hpp" />
   </ItemGroup>

@@ -15,12 +15,12 @@ extern float g_imgAlpha;
 
 // dish order: 0=soup, 1=grilled_meat, 2=bread, 3=pie, 4=cake
 
-static const int SEAT_X[SERVING_SEATS] = { 120, 360, 570, 815 };
+static const int SEAT_X[SERVING_SEATS] = { 79, 319, 529, 774 };
 static const int SEAT_Y[SERVING_SEATS] = { 130, 132, 130, 130 };
 
 static const bool SEAT_FACES_RIGHT[SERVING_SEATS] = { true, false, true, false };
 
-static const int NPC_W = 150, NPC_H = 310;
+static const int NPC_W = 232, NPC_H = 310;
 
 static const int SERVE_X[SERVING_SEATS] = { 250, 450, 690, 890 };
 
@@ -28,12 +28,12 @@ static const int TABLE_DISH_X[SERVING_SEATS] = { 244, 320, 688, 760 };
 static const int TABLE_DISH_Y[SERVING_SEATS] = { 256, 246, 256, 246 };
 static const int TABLE_DISH_SIZE = 56;
 
-static const int MC_HOME_X = 1020;
+static const int MC_HOME_X = 980;
 static const int MC_Y = 96;
-static const int MC_W = 140, MC_H = 350;
+static const int MC_W = 232, MC_H = 350;
 
-static const int TRAY_DX_FACING_LEFT = 38;
-static const int TRAY_DX_FACING_RIGHT = 52;
+static const int TRAY_DX_FACING_LEFT = 82;
+static const int TRAY_DX_FACING_RIGHT = 100;
 static const int TRAY_DY = 92;
 static const int TRAY_ICON_SIZE = 50;
 
@@ -59,7 +59,7 @@ static const int MISTAKES_TEXT_X = 952, MISTAKES_TEXT_Y = 590;
 static const int RESULT_BUTTON_X = 488, RESULT_BUTTON_Y = 238;
 static const int RESULT_BUTTON_W = 300, RESULT_BUTTON_H = 60;
 
-static const double CUSTOMER_WALK_SPEED = 3.5;
+static const double CUSTOMER_WALK_SPEED = 4.5;
 static const double MC_WALK_SPEED = 7.0;
 static const double OFFSCREEN_X = -200.0;
 

@@ -16,6 +16,10 @@
 #include "ServingGame.hpp"
 #include "Foresttrail.hpp"
 #include "Itemobtained.hpp"
+#include "GhostChase.hpp"
+#include "MirrorHall.hpp"
+#include "FinalFight.hpp"
+#include "SaveGame.hpp"
 
 enum GameState{
 
@@ -31,7 +35,16 @@ enum GameState{
 	SERVING_GAME,
 	FOREST,
 	FOREST_TRAIL,
-	MOONVEIL,
+	MOONVEIL_APPROACH,
+	MOONVEIL_HALL,
+	MOONVEIL_ROOM,
+	MOONVEIL_SANCTUM,
+	GHOST_CHASE,
+	MIRROR_HALL,
+	ASTRAL_FLOOR,
+	FINAL_FIGHT,
+	ASTRAL_END,
+	EPILOGUE,
 	TITLE_CARD
 
 };
@@ -208,6 +221,42 @@ ForestTrail forestTrail;
 
 ItemObtained itemObtained;
 
+Map approachMap;
+Map hallMap;
+Map roomMap;
+Map sanctumMap;
+
+Npc mage;
+
+GhostChase ghostChase;
+MirrorHall mirrorHall;
+
+int mageBoxImg;
+
+int travelAstralImg, travelAstralHoverImg;
+
+bool showAstralPrompt = false;
+
+int mageStep = -1;
+int sanctumStep = -1;
+
+Map astralMap;
+Npc guardian;
+FinalFight finalFight;
+
+int guardianBoxImg;
+int hollowBoxImg;
+int cageImg, cageBrokenImg;
+int sealFloorImg;
+int endCardImg[4];
+
+int astralStep = -1;
+int endStep = -1;
+int epilogueCard = 0;
+int epilogueTick = 0;
+
+bool cageBroken = false;
+
 int mouseX = 0;
 int mouseY = 0;
 
@@ -268,7 +317,7 @@ char* mcThroneReplyLines[] = {
 const int MC_THRONE_REPLY_COUNT = 1;
 
 char* hallwayLines1[] = {
-	"Master left over a week ago...",
+	"Master left over two months ago...",
 	"He said he was going to investigate Emberfall Village.",
 	"But he never came back.",
 	"All he left behind is a note and a strange pendant...",
@@ -287,7 +336,7 @@ char* restaurantOwnerLines1[] =
 
 char* restaurantMcLines1[] =
 {
-	"Yes. He came to Emberfall about a week ago. Do you know where he went?"
+	"Yes. He came to Emberfall not too long ago. Do you know where he went?"
 };
 
 char* restaurantOwnerLines2[] =
@@ -327,7 +376,7 @@ char* restaurantReturnMcLines1[] =
 
 char* restaurantReturnOwnerLines2[] =
 {
-	"He came here a few days ago. He seemed worried about the sacred seal.",
+	"He came here about two months ago. He seemed worried about the sacred seal.",
 	"He asked me about the old road leading into Silverleaf Forest."
 };
 
@@ -400,7 +449,7 @@ char* npc2Lines1[] =
 };
 char* mcNpc2Lines1[] =
 {
-	"I'm looking for the Guardian. He came to Emberfall recently.",
+	"I'm looking for the Guardian. He came to Emberfall not too long ago.",
 	"Have you seen him?"
 };
 char* npc2Lines2[] =
@@ -458,7 +507,7 @@ char* mcHerbLines5[] = { "...Thank you. I'll make good use of it." };
 
 char* clearingLines1[] =
 {
-	"A piece of cloth, a page, a magic artifact... and a circle someone drew and never finished.",
+	"A piece of cloth, a page, a magic artifact... and a magic circle someone drew and never finished.",
 	"Master was here.",
 	"Did he leave all of this behind on purpose...?"
 };
@@ -473,6 +522,115 @@ char* clearingLines2[] =
 	"And he left the artifact for whoever followed him. It will surely be of help."
 };
 const int CLEARING_LINE_COUNT_2 = 5;
+
+// moonveil main hall convo
+char* mageHall1[] = { "Stop there. The floor past the second pillar doesn't hold anymore." };
+char* mcHall1[] = { "Who are you?" };
+char* mageHall2[] = { "Someone who was here before you. That's all it needs to be." };
+char* mcHall2[] = { "I'm looking for the Guardian. He came this way." };
+char* mageHall3[] = { "He came through in the spring. He went down. He did not come up." };
+char* mcHall3[] = { "And you let him?" };
+char* mageHall4[] =
+{
+	"I did try to stop him.",
+	"Moonveil sits over a thin place. The way through isn't a door you open - it's a condition. The temple has to be awake, and it has been asleep since the attack.",
+	"Its lights are out. Put them back and the way opens. I have been trying for two months."
+};
+char* mcHall4[] = { "Then why hasn't it worked?" };
+char* mageHall5[] =
+{
+	"Because it doesn't answer to me.",
+	"It answered to you when you walked in. Did you notice? No. Of course you didn't.",
+	"Go on, then. If it wakes for you, come and find me."
+};
+
+// moonveil inner sanctum convo
+char* mcSanct1[] = { "You again?!" };
+char* mageSanct1[] = { "I live here. You're the one wandering around someone else's temple at night." };
+char* veylSanct1[] =
+{
+	"I'm Veyl. Since you'll only keep asking.",
+	"There are two ways down to the lights. The undercroft flooded years ago and something moved in. The upper halls are dry, and worse in a different way.",
+	"Take this either way. It won't make you brave, but it will buy you three seconds, and three seconds is usually the difference."
+};
+char charmOption1[] = "Take the charm.";
+char charmOption2[] = "I'll manage.";
+
+char* veylTook[] = { "Good. Don't spend it early." };
+char* veylRefused[] = { "Suit yourself. You'll want it in an hour." };
+
+char* veylSanct2[] =
+{
+	"One more thing, and then I'll leave you to it.",
+	"When the way opens, it won't be because you forced it. It'll be because something on the other side decided to let you in.",
+	"Think about what that means before you step through."
+};
+char routeOption1[] = "Take the undercroft stairs.";
+char routeOption2[] = "Take the upper halls.";
+
+// after the mini-games
+char* veylAfter[] =
+{
+	"The lights are back. I felt it from here.",
+	"The way is open, and it opened easily. Remember what I said.",
+	"Go on. I'll keep the door behind you."
+};
+
+char* veylOpen[] =
+{
+	"There it is. Six months, and it opens for someone who's been here a day."
+};
+char* mcOpen[] = { "Come with me." };
+char* veylOpen2[] =
+{
+	"No. Someone has to be on this side of it.",
+	"If it closes behind you and there's no one holding the door, it doesn't open again. Not for either of you."
+};
+char* mcOpen2[] = { "...Then I'll be quick." };
+char* veylOpen3[] = { "Don't be quick. Be careful. Quick is how your master went in." };
+
+char* mcCage1[] = { "Master -" };
+char* guardCage1[] = { "Don't touch it.", "You came." };
+char* mcCage2[] = { "You left a letter and a pendant, and a journal on a rock in the middle of a forest. What was I supposed to do?" };
+char* guardCage2[] =
+{
+	"Not this. I was fairly clear about not this.",
+	"Listen. The seals aren't broken. They're unattended. They need someone standing at them, and there has only ever been one of us at a time.",
+	"Every generation the prophecy picks one person, and every generation that person is a little further from the five who built this. I'm the weakest Guardian Aurion has ever had. You'll be weaker."
+};
+char* mcCage3[] = { "That's not encouraging." };
+char* guardCage3[] = { "It isn't meant to be. It's the reason this is happening." };
+char* hollowCage[] =
+{
+	"HE HAS NOT SAID MY NAME IN SIX MONTHS.",
+	"YOU WILL BE EASIER."
+};
+char* guardCage4[] = { "Get to a seal. Stand there. Don't listen to it and don't answer it - go." };
+
+// after the fight ends
+char* mcEnd1[] = { "Is it - is that it?" };
+char* guardEnd1[] = { "That's it. For about forty years, if we're lucky." };
+char* mcEnd2[] = { "Forty years." };
+char* guardEnd2[] =
+{
+	"It was never a cure. It's a watch. Someone stands here, and the kingdom gets to not think about it.",
+	"That's what I came to tell the King, before I got stubborn and came down here alone instead."
+};
+char* mcEnd3[] = { "You said I'd be weaker than you." };
+char* guardEnd3[] =
+{
+	"You are. You also did in a week what I couldn't do in six months, and you did not do any of it by yourself.",
+	"A villager pointed you at a restaurant. A herbalist gave you a compass. A man who wouldn't tell you his name held a door open for a day and a night.",
+	"One Guardian was always the mistake. It just took six hundred years for the mistake to catch up."
+};
+
+char* EPILOGUE_TEXT[4] =
+{
+	"The King was told the truth, which had not happened in some time.",
+	"Emberfall stopped emptying. The restaurant hired staff.",
+	"Veyl stopped being the only one keeping the temple. He complained about the noise.",
+	"And the next time the seals need watching, there will be more than one of us."
+};
 
 const int THRONE_PLAYER_X = 595, THRONE_PLAYER_Y = 150;
 const int HALLWAY_PLAYER_X = 595, HALLWAY_PLAYER_Y = 300;
@@ -515,6 +673,32 @@ const int DEEP_ENTER_X = 1630, DEEP_ENTER_Y = 1790, DEEP_ENTER_W = 116, DEEP_ENT
 const int DEEP_PROMPT_X_MIN = 480, DEEP_PROMPT_X_MAX = 800;
 const int DEEP_PROMPT_Y_MIN = 72, DEEP_PROMPT_Y_MAX = 115;
 
+const int APPROACH_SPAWN_X = 600, APPROACH_SPAWN_Y = 90;
+const int GATE_X = 575, GATE_Y = 2235, GATE_W = 130, GATE_H = 70;
+
+const int HALL_SPAWN_X = 600, HALL_SPAWN_Y = 95;
+const int MAGE_HALL_X = 880, MAGE_HALL_Y = 300;
+const int HALL_DOOR_X = 1175, HALL_DOOR_Y = 240, HALL_DOOR_W = 60, HALL_DOOR_H = 140;
+
+const int ROOM_SPAWN_X = 160, ROOM_SPAWN_Y = 240;
+const int ROOM_DOOR_X = 565, ROOM_DOOR_Y = 86, ROOM_DOOR_W = 155, ROOM_DOOR_H = 80;
+
+const int SANCTUM_SPAWN_X = 640, SANCTUM_SPAWN_Y = 110;
+const int MAGE_SANCTUM_X = 300, MAGE_SANCTUM_Y = 300;
+
+const int ASTRAL_SPAWN_X = 1240, ASTRAL_SPAWN_Y = 170;
+const int CAGE_X = 1180, CAGE_Y = 1320, CAGE_W = 200, CAGE_H = 280;
+const int GUARDIAN_FLOOR_X = 1235, GUARDIAN_FLOOR_Y = 1390;
+
+const int FLOOR_SEAL_COUNT = 5;
+const int FLOOR_SEAL[FLOOR_SEAL_COUNT][2] =
+{
+	{ 560, 500 }, { 520, 1180 }, { 1240, 1320 }, { 1960, 1180 }, { 1940, 500 }
+};
+const int FLOOR_SEAL_SIZE = 128;
+
+const int EPILOGUE_IN = 40, EPILOGUE_HOLD = 260;
+
 bool rectanglesOverlap(Rect a, Rect b)
 {
 	return
@@ -522,6 +706,23 @@ bool rectanglesOverlap(Rect a, Rect b)
 		a.x + a.w > b.x &&
 		a.y < b.y + b.h &&
 		a.y + a.h > b.y;
+}
+
+void saveAt(int checkpoint)
+{
+	SaveData d;
+
+	strcpy(d.name, nameInput.getName());
+	d.version = 0;
+	d.checkpoint = checkpoint;
+
+	d.hasPendant = inventory.getHasPendant() ? 1 : 0;
+	d.hasHoodedGift = inventory.getHasHoodedGift() ? 1 : 0;
+	d.hasCompass = inventory.getHasCompass() ? 1 : 0;
+	d.hasStarwheel = inventory.getHasStarwheel() ? 1 : 0;
+	d.hasCharm = inventory.getHasCharm() ? 1 : 0;
+
+	writeSave(d);
 }
 
 void enterThroneRoom()
@@ -561,6 +762,8 @@ void enterVillage()
 	villageMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
 
 	requestTitleCard("Emberfall Village", 0, VILLAGE);
+
+	saveAt(SAVE_VILLAGE);
 }
 
 void enterForest()
@@ -576,6 +779,8 @@ void enterForest()
 	forestMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
 
 	requestTitleCard("Silverleaf Forest", 0, FOREST);
+
+	saveAt(SAVE_FOREST);
 }
 
 void enterForestTrail()
@@ -588,7 +793,7 @@ void enterForestTrail()
 	requestFade(FOREST_TRAIL);
 }
 
-void enterMoonveil()
+/*void enterMoonveil()
 {
 	showMoonveilPrompt = false;
 
@@ -596,6 +801,124 @@ void enterMoonveil()
 	player.setFacing(DIR_BACK);
 
 	requestTitleCard("Moonveil Temple", "Abandoned since the attack", MOONVEIL);
+}*/
+
+void enterMoonveilApproach()
+{
+	mageStep = -1;
+	sanctumStep = -1;
+	showMoonveilPrompt = false;
+	showAstralPrompt = false;
+
+	player.init(APPROACH_SPAWN_X, APPROACH_SPAWN_Y);
+	player.setFacing(DIR_BACK);
+
+	approachMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	requestTitleCard("Moonveil Temple", "Abandoned since the attack", MOONVEIL_APPROACH);
+
+	saveAt(SAVE_MOONVEIL);
+}
+
+void enterMoonveilHall()
+{
+	player.init(HALL_SPAWN_X, HALL_SPAWN_Y);
+	player.setFacing(DIR_BACK);
+
+	mageStep = 0;
+	dialogueBox.startDialogue("Mage", mageHall1, 1, false, mageBoxImg);
+
+	requestFade(MOONVEIL_HALL);
+}
+
+void enterMoonveilRoom()
+{
+	player.init(ROOM_SPAWN_X, ROOM_SPAWN_Y);
+	player.setFacing(DIR_RIGHT);
+
+	requestFade(MOONVEIL_ROOM);
+}
+
+void enterMoonveilSanctum()
+{
+	mage.init(MAGE_SANCTUM_X, MAGE_SANCTUM_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Veyl");
+	
+	player.init(SANCTUM_SPAWN_X, SANCTUM_SPAWN_Y);
+	player.setFacing(DIR_BACK);
+
+	sanctumStep = 0;
+	dialogueBox.startDialogue(nameInput.getName(), mcSanct1, 1, true);
+
+	requestFade(MOONVEIL_SANCTUM);
+}
+
+void enterGhostChase()
+{
+	ghostChase.start(inventory.getHasCharm(), player);
+	requestFade(GHOST_CHASE);
+}
+
+void enterMirrorHall()
+{
+	mirrorHall.start(inventory.getHasCharm(), player);
+	requestFade(MIRROR_HALL);
+}
+
+void returnFromMoonveilGame()
+{
+	player.init(SANCTUM_SPAWN_X, SANCTUM_SPAWN_Y);
+	player.setFacing(DIR_FRONT);
+
+	sanctumStep = 200;
+	dialogueBox.startDialogue("Veyl", veylAfter, 3, false, mageBoxImg);
+
+	requestFade(MOONVEIL_SANCTUM);
+
+	saveAt(SAVE_ASTRAL);
+}
+
+void enterAstralFloor()
+{
+	astralStep = -1;
+	cageBroken = false;
+
+	guardian.init(GUARDIAN_FLOOR_X, GUARDIAN_FLOOR_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Guardian");
+
+	player.init(ASTRAL_SPAWN_X, ASTRAL_SPAWN_Y);
+	player.setFacing(DIR_BACK);
+
+	astralMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	requestTitleCard("The Astral Sanctum", "Where the five seals stand", ASTRAL_FLOOR);
+}
+
+void enterFinalFight()
+{
+	finalFight.start(inventory.getHasStarwheel(), player);
+	requestFade(FINAL_FIGHT);
+}
+
+void enterAstralEnd()
+{
+	endStep = 0;
+	cageBroken = true;
+
+	guardian.init(980, 300, PLAYER_WIDTH, PLAYER_HEIGHT, "Guardian");
+
+	player.init(1150, 300);
+	player.setFacing(DIR_LEFT);
+
+	dialogueBox.startDialogue(nameInput.getName(), mcEnd1, 1, true);
+
+	requestFade(ASTRAL_END);
+}
+
+void enterEpilogue()
+{
+	epilogueCard = 0;
+	epilogueTick = 0;
+	clearSave();
+	requestFade(EPILOGUE);
 }
 
 void enterRestaurant()
@@ -620,6 +943,8 @@ void returnToRestaurantAfterMinigame()
 	dialogueBox.startDialogue("Restaurant Owner", restaurantReturnOwnerLines1, 2, false, restaurantOwnerBoxImg);
 
 	requestFade(RESTAURANT);
+
+	saveAt(SAVE_RESTAURANT);
 }
 
 void enterCookingGame()
@@ -661,6 +986,43 @@ void drawTravelPrompt(int normalImg, int hoverImg)
 {
 	bool hov = overTravelPrompt(mouseX, mouseY);
 	iShowImage(TRAVEL_IMG_X, TRAVEL_IMG_Y, 350, 197, hov ? hoverImg : normalImg);
+}
+
+void continueGame()
+{
+	SaveData d;
+	if (!readSave(d)) return;
+
+	nameInput.setName(d.name);
+
+	if (d.hasPendant)    inventory.givePendant();
+	if (d.hasHoodedGift) inventory.giveHoodedGift();
+	if (d.hasCompass)    inventory.giveCompass();
+	if (d.hasStarwheel)  inventory.giveStarwheel();
+	if (d.hasCharm)      inventory.giveCharm();
+
+	switch (d.checkpoint)
+	{
+	case SAVE_VILLAGE:
+		enterVillage();
+		break;
+	case SAVE_RESTAURANT:
+		enterVillage();
+		break;
+	case SAVE_FOREST:
+		enterForest();
+		break;
+	case SAVE_MOONVEIL:
+		enterMoonveilApproach();
+		break;
+	case SAVE_ASTRAL:
+		enterMoonveilSanctum();
+		sanctumStep = 200;
+		break;
+	default:
+		enterVillage();
+		break;
+	}
 }
 
 void iDraw()
@@ -854,12 +1216,106 @@ void iDraw()
 
 		break;
 
-	case MOONVEIL:
-	// to be added: moonveilMap.draw()
-	break;
+	case MOONVEIL_APPROACH:
+		approachMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		approachMap.draw();
+		player.draw(approachMap.getCameraX(), approachMap.getCameraY());
+		inventory.draw(mouseX, mouseY);
+		break;
 
+	case MOONVEIL_HALL:
+		hallMap.draw();
+		mage.draw(0, 0);
+		player.draw(0, 0);
+		dialogueBox.draw(mouseX, mouseY);
+		inventory.draw(mouseX, mouseY);
+		break;
+
+	case MOONVEIL_ROOM:
+		roomMap.draw();
+		player.draw(0, 0);
+		inventory.draw(mouseX, mouseY);
+		break;
+
+	case MOONVEIL_SANCTUM:
+		sanctumMap.draw();
+		mage.draw(0, 0);
+		player.draw(0, 0);
+		dialogueBox.draw(mouseX, mouseY);
+		inventory.draw(mouseX, mouseY);
+		itemObtained.draw();
+
+		if (showAstralPrompt && !dialogueBox.isActive())
+		{
+			drawTravelPrompt(travelAstralImg, travelAstralHoverImg);
+		}
+		break;
+
+	case GHOST_CHASE:
+		ghostChase.draw(player, mouseX, mouseY);
+		break;
+
+	case MIRROR_HALL:
+		mirrorHall.draw(player, mouseX, mouseY);
+		break;
+
+	case ASTRAL_FLOOR:
+	{
+		astralMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		astralMap.draw();
+
+		int cx = astralMap.getCameraX();
+		int cy = astralMap.getCameraY();
+
+		for (int i = 0; i < FLOOR_SEAL_COUNT; i++)
+		{
+			iShowImage(FLOOR_SEAL[i][0] - cx, FLOOR_SEAL[i][1] - cy,
+			FLOOR_SEAL_SIZE, FLOOR_SEAL_SIZE, sealFloorImg);
+		}
+
+		iShowImage(CAGE_X - cx, CAGE_Y - cy, CAGE_W, CAGE_H, cageBroken ? cageBrokenImg : cageImg);
+
+		guardian.draw(cx, cy);
+		player.draw(cx, cy);
+
+		dialogueBox.draw(mouseX, mouseY);
+		inventory.draw(mouseX, mouseY);
+		break;
 	}
 
+	case FINAL_FIGHT:
+		finalFight.draw(player, mouseX, mouseY);
+		break;
+
+	case ASTRAL_END:
+	{
+		astralMap.updateCamera(player.getX(), player.getY(), PLAYER_WIDTH, PLAYER_HEIGHT);
+		astralMap.draw();
+
+		int cx2 = astralMap.getCameraX();
+		int cy2 = astralMap.getCameraY();
+
+		for (int i = 0; i < FLOOR_SEAL_COUNT; i++)
+		{
+			iShowImage(FLOOR_SEAL[i][0] - cx2, FLOOR_SEAL[i][1] - cy2,
+			FLOOR_SEAL_SIZE, FLOOR_SEAL_SIZE, sealFloorImg);
+		}
+
+		guardian.draw(cx2, cy2);
+		player.draw(cx2, cy2);
+		dialogueBox.draw(mouseX, mouseY);
+		break;
+	}
+
+	case EPILOGUE:
+	{
+		iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, endCardImg[epilogueCard]);
+
+		float a = titleAlpha(epilogueTick, EPILOGUE_IN, EPILOGUE_IN + 45);
+		drawFadingText(120, 120, EPILOGUE_TEXT[epilogueCard], a, GLUT_BITMAP_TIMES_ROMAN_24, 3);
+		break;
+	}
+}
 	drawFadeOverlay();
 }
 
@@ -914,12 +1370,13 @@ void iMouse(int button, int state, int mx, int my)
 		{
 		case 1:
 			// new game
+			clearSave();
 			requestFade(NAME_INPUT);
 			break;
 
 		case 2:
 			// continue
-			// to be added
+			continueGame();
 			break;
 
 		case 3:
@@ -1502,8 +1959,215 @@ void iMouse(int button, int state, int mx, int my)
 
 		if (clearingStep == 6 && overTravelPrompt(mx, my))
 		{
-			enterMoonveil();
+			enterMoonveilApproach();
 			return;
+		}
+
+		return;
+	}
+
+	if (currentState == MOONVEIL_ROOM)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) inventory.handleClick(mx, my);
+		return;
+	}
+
+	if (currentState == MOONVEIL_APPROACH)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) inventory.handleClick(mx, my);
+		return;
+	}
+
+	if (currentState == MOONVEIL_HALL)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+
+		if (inventory.handleClick(mx, my)) return;
+
+		if (dialogueBox.isActive())
+		{
+			dialogueBox.advance();
+
+			if (!dialogueBox.isActive())
+			{
+				switch (mageStep)
+				{
+				case 0: mageStep = 1; dialogueBox.startDialogue(nameInput.getName(), mcHall1, 1, true); break;
+				case 1: mageStep = 2; dialogueBox.startDialogue("Mage", mageHall2, 1, false, mageBoxImg); break;
+				case 2: mageStep = 3; dialogueBox.startDialogue(nameInput.getName(), mcHall2, 1, true); break;
+				case 3: mageStep = 4; dialogueBox.startDialogue("Mage", mageHall3, 1, false, mageBoxImg); break;
+				case 4: mageStep = 5; dialogueBox.startDialogue(nameInput.getName(), mcHall3, 1, true); break;
+				case 5: mageStep = 6; dialogueBox.startDialogue("Mage", mageHall4, 3, false, mageBoxImg); break;
+				case 6: mageStep = 7; dialogueBox.startDialogue(nameInput.getName(), mcHall4, 1, true); break;
+				case 7: mageStep = 8; dialogueBox.startDialogue("Mage", mageHall5, 3, false, mageBoxImg); break;
+				case 8: mageStep = 9; break;
+				}
+			}
+		}
+
+		return;
+	}
+
+	if (currentState == MOONVEIL_SANCTUM)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+
+		if (itemObtained.getIsActive())
+		{
+			itemObtained.hide();
+			sanctumStep = 5;
+			dialogueBox.startDialogue("Veyl", veylTook, 1, false, mageBoxImg);
+			return;
+		}
+
+		if (showAstralPrompt && overTravelPrompt(mx, my))
+		{
+			showAstralPrompt = false;
+			enterAstralFloor();
+			return;
+		}
+
+		if (inventory.handleClick(mx, my)) return;
+
+		if (dialogueBox.isActive())
+		{
+			if (dialogueBox.isShowingOptions())
+			{
+				int option = dialogueBox.checkOptionClick(mx, my);
+
+				if (sanctumStep == 4)
+				{
+					if (option == 1)
+					{
+						inventory.giveCharm();
+						dialogueBox.close();
+						itemObtained.show(inventory.getCharmIcon());
+					}
+					else if (option == 2)
+					{
+						sanctumStep = 5;
+						dialogueBox.startDialogue("Veyl", veylRefused, 1, false, mageBoxImg);
+					}
+					return;
+				}
+
+				if (sanctumStep == 7)
+				{
+					if (option == 1) { dialogueBox.close(); enterGhostChase(); }
+					else if (option == 2) { dialogueBox.close(); enterMirrorHall(); }
+					return;
+				}
+
+				return;
+			}
+
+			dialogueBox.advance();
+
+			if (!dialogueBox.isActive())
+			{
+				switch (sanctumStep)
+				{
+				case 0: sanctumStep = 1; dialogueBox.startDialogue("Mage", mageSanct1, 1, false, mageBoxImg); break;
+				case 1: sanctumStep = 2; dialogueBox.startDialogue("Veyl", veylSanct1, 3, false, mageBoxImg); break;
+				case 2: sanctumStep = 4; dialogueBox.startOptions(charmOption1, charmOption2); break;
+				case 5: sanctumStep = 6; dialogueBox.startDialogue("Veyl", veylSanct2, 3, false, mageBoxImg); break;
+				case 6: sanctumStep = 7; dialogueBox.startOptions(routeOption1, routeOption2); break;
+				case 200: sanctumStep = 201; dialogueBox.startDialogue("Veyl", veylOpen, 1, false, mageBoxImg); break;
+				case 201: sanctumStep = 202; dialogueBox.startDialogue(nameInput.getName(), mcOpen, 1, true); break;
+				case 202: sanctumStep = 203; dialogueBox.startDialogue("Veyl", veylOpen2, 2, false, mageBoxImg); break;
+				case 203: sanctumStep = 204; dialogueBox.startDialogue(nameInput.getName(), mcOpen2, 1, true); break;
+				case 204: sanctumStep = 205; dialogueBox.startDialogue("Veyl", veylOpen3, 1, false, mageBoxImg); break;
+				case 205: sanctumStep = 206; showAstralPrompt = true; break;
+				}
+			}
+		}
+
+		return;
+	}
+
+	if (currentState == GHOST_CHASE)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) ghostChase.handleClick(mx, my);
+		return;
+	}
+
+	if (currentState == MIRROR_HALL)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) mirrorHall.handleClick(mx, my);
+		return;
+	}
+
+	if (currentState == ASTRAL_FLOOR)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+		if (inventory.handleClick(mx, my)) return;
+
+		if (dialogueBox.isActive())
+		{
+			dialogueBox.advance();
+
+			if (!dialogueBox.isActive())
+			{
+				switch (astralStep)
+				{
+				case 0: astralStep = 1; dialogueBox.startDialogue("Guardian", guardCage1, 2, false, guardianBoxImg); break;
+				case 1: astralStep = 2; dialogueBox.startDialogue(nameInput.getName(), mcCage2, 1, true); break;
+				case 2: astralStep = 3; dialogueBox.startDialogue("Guardian", guardCage2, 3, false, guardianBoxImg); break;
+				case 3: astralStep = 4; dialogueBox.startDialogue(nameInput.getName(), mcCage3, 1, true); break;
+				case 4: astralStep = 5; dialogueBox.startDialogue("Guardian", guardCage3, 1, false, guardianBoxImg); break;
+				case 5: astralStep = 6; dialogueBox.startDialogue("The Hollow", hollowCage, 2, false, hollowBoxImg); break;
+				case 6: astralStep = 7; cageBroken = true;
+					dialogueBox.startDialogue("Guardian", guardCage4, 1, false, guardianBoxImg); break;
+				case 7: astralStep = 8; enterFinalFight(); break;
+				}
+			}
+		}
+
+		return;
+	}
+
+	if (currentState == FINAL_FIGHT)
+	{
+		if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) finalFight.handleClick(mx, my);
+		return;
+	}
+
+	if (currentState == ASTRAL_END)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+
+		if (dialogueBox.isActive())
+		{
+			dialogueBox.advance();
+
+			if (!dialogueBox.isActive())
+			{
+				switch (endStep)
+				{
+				case 0: endStep = 1; dialogueBox.startDialogue("Guardian", guardEnd1, 1, false, guardianBoxImg); break;
+				case 1: endStep = 2; dialogueBox.startDialogue(nameInput.getName(), mcEnd2, 1, true); break;
+				case 2: endStep = 3; dialogueBox.startDialogue("Guardian", guardEnd2, 2, false, guardianBoxImg); break;
+				case 3: endStep = 4; dialogueBox.startDialogue(nameInput.getName(), mcEnd3, 1, true); break;
+				case 4: endStep = 5; dialogueBox.startDialogue("Guardian", guardEnd3, 3, false, guardianBoxImg); break;
+				case 5: endStep = 6; enterEpilogue(); break;
+				}
+			}
+		}
+
+		return;
+	}
+
+	if (currentState == EPILOGUE)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+		if (epilogueTick < EPILOGUE_IN + 45) return;
+
+		epilogueCard++;
+		epilogueTick = 0;
+
+		if (epilogueCard >= 4)
+		{
+			requestTitleCard("ECHOES OF AURION", 0, CREDITS);
 		}
 
 		return;
@@ -1523,6 +2187,19 @@ void iKeyboard(unsigned char key)
 	{
 		forestTrail.handleKey(key);
 	}
+
+	if (currentState == GHOST_CHASE)
+	{
+		ghostChase.handleKey(key);
+	}
+	if (currentState == MIRROR_HALL)
+	{
+		mirrorHall.handleKey(key);
+	}
+	if (currentState == FINAL_FIGHT)
+	{
+		finalFight.handleKey(key);
+	}
 }
 
 // Special Keys:
@@ -1531,6 +2208,8 @@ void iKeyboard(unsigned char key)
 
 void fixedUpdate()
 {
+	if (fadePhase != FADE_NONE) return;
+	
 	if (currentState == VILLAGE)
 	{
 
@@ -1626,6 +2305,128 @@ void fixedUpdate()
 		return;
 	}
 
+	if (currentState == MOONVEIL_APPROACH)
+	{
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, approachMap);
+
+		Rect gate = { GATE_X, GATE_Y, GATE_W, GATE_H };
+		if (rectanglesOverlap(player.getFeetRect(), gate)) enterMoonveilHall();
+
+		return;
+	}
+
+	if (currentState == MOONVEIL_HALL)
+	{
+		if (dialogueBox.isActive()) return;
+
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, hallMap);
+
+		if (mageStep >= 9)
+		{
+			Rect door = { HALL_DOOR_X, HALL_DOOR_Y, HALL_DOOR_W, HALL_DOOR_H };
+			if (rectanglesOverlap(player.getFeetRect(), door)) enterMoonveilRoom();
+		}
+
+		return;
+	}
+
+	if (currentState == MOONVEIL_ROOM)
+	{
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, roomMap);
+
+		Rect door = { ROOM_DOOR_X, ROOM_DOOR_Y, ROOM_DOOR_W, ROOM_DOOR_H };
+		if (rectanglesOverlap(player.getFeetRect(), door)) enterMoonveilSanctum();
+
+		return;
+	}
+
+	if (currentState == MOONVEIL_SANCTUM)
+	{
+		if (dialogueBox.isActive() || itemObtained.getIsActive()) return;
+
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, sanctumMap);
+		return;
+	}
+
+	if (currentState == GHOST_CHASE)
+	{
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, ghostChase.getMap());
+		ghostChase.updateCamera(player);
+		return;
+	}
+
+	if (currentState == MIRROR_HALL)
+	{
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		mirrorHall.handleInput(up, down, left, right, player);
+		return;
+	}
+
+	if (currentState == ASTRAL_FLOOR)
+	{
+		if (dialogueBox.isActive()) return;
+
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, astralMap);
+
+		if (astralStep == -1)
+		{
+			Rect cageZone = { CAGE_X - 80, CAGE_Y - 140, CAGE_W + 160, 180 };
+
+			if (rectanglesOverlap(player.getFeetRect(), cageZone))
+			{
+				astralStep = 0;
+				dialogueBox.startDialogue(nameInput.getName(), mcCage1, 1, true);
+			}
+		}
+
+		return;
+	}
+
+	if (currentState == FINAL_FIGHT)
+	{
+		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
+		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
+		bool left = isKeyPressed('a') || isSpecialKeyPressed(GLUT_KEY_LEFT);
+		bool right = isKeyPressed('d') || isSpecialKeyPressed(GLUT_KEY_RIGHT);
+
+		player.handleInput(up, down, left, right, finalFight.getMap());
+		return;
+	}
+
 }
 
 void update()
@@ -1709,6 +2510,69 @@ void update()
 
 		return;
 	}
+
+	if (currentState == GHOST_CHASE)
+	{
+		ghostChase.update(player);
+
+		if (ghostChase.isFinished())
+		{
+			returnFromMoonveilGame();
+			return;
+		}
+
+		if (ghostChase.isRetryRequested())
+		{
+			ghostChase.start(inventory.getHasCharm(), player);
+			return;
+		}
+
+		return;
+	}
+
+	if (currentState == MIRROR_HALL)
+	{
+		mirrorHall.update(player);
+
+		if (mirrorHall.isFinished())
+		{
+			returnFromMoonveilGame();
+			return;
+		}
+
+		if (mirrorHall.isRetryRequested())
+		{
+			mirrorHall.start(inventory.getHasCharm(), player);
+			return;
+		}
+
+		return;
+	}
+
+	if (currentState == EPILOGUE)
+	{
+		epilogueTick++;
+		return;
+	}
+
+	if (currentState == FINAL_FIGHT)
+	{
+		finalFight.update(player);
+
+		if (finalFight.isFinished())
+		{
+			enterAstralEnd();
+			return;
+		}
+
+		if (finalFight.isRetryRequested())
+		{
+			finalFight.start(inventory.getHasStarwheel(), player);
+			return;
+		}
+
+		return;
+	}
 }
 
 int main()
@@ -1725,6 +2589,9 @@ int main()
 	itemObtained.loadImages();
 	cookingGame.loadImages();
 	servingGame.loadImages();
+	ghostChase.loadImages();
+	mirrorHall.loadImages();
+	finalFight.loadImages();
 
 	player.loadImages();
 	dialogueBox.loadImages();
@@ -1792,6 +2659,107 @@ int main()
 	forestMap.addObstacle(1985, 1297, 55, 41);
 	forestMap.addObstacle(2281, 754, 112, 82);
 
+	approachMap.init("Images//map_moonveil_approach.png", 1280, 2400, true);
+	hallMap.init("Images//map_moonveil_hall.png", SCREEN_WIDTH, SCREEN_HEIGHT, false);
+	roomMap.init("Images//map_moonveil_room.png", SCREEN_WIDTH, SCREEN_HEIGHT, false);
+	sanctumMap.init("Images//map_moonveil_sanctum.png", SCREEN_WIDTH, SCREEN_HEIGHT, false);
+
+	// moonveil approach
+	approachMap.addObstacle(0, 0, 540, 160);
+	approachMap.addObstacle(745, 0, 535, 160);
+	approachMap.addObstacle(0, 160, 520, 320);
+	approachMap.addObstacle(760, 160, 520, 320);
+	approachMap.addObstacle(0, 480, 520, 480);
+	approachMap.addObstacle(775, 480, 505, 480);
+	approachMap.addObstacle(0, 960, 460, 320);
+	approachMap.addObstacle(825, 960, 455, 320);
+	approachMap.addObstacle(0, 1280, 535, 640);
+	approachMap.addObstacle(770, 1280, 510, 640);
+	approachMap.addObstacle(0, 1920, 530, 160);
+	approachMap.addObstacle(750, 1920, 530, 160);
+	approachMap.addObstacle(0, 2080, 450, 230);
+	approachMap.addObstacle(810, 2080, 470, 230);
+	approachMap.addObstacle(0, 2310, 1280, 90);
+
+	// moonveil main hall
+	hallMap.addObstacle(0, 0, 58, 720);
+	hallMap.addObstacle(0, 648, 1280, 72);
+	hallMap.addObstacle(0, 0, 1280, 76);
+	hallMap.addObstacle(1230, 0, 50, 230);
+	hallMap.addObstacle(1230, 385, 50, 335);
+	hallMap.addObstacle(895, 435, 320, 213);
+	hallMap.addObstacle(1100, 78, 115, 95);
+	hallMap.addObstacle(192, 465, 60, 135);
+	hallMap.addObstacle(402, 465, 60, 135);
+	hallMap.addObstacle(820, 462, 60, 138);
+	hallMap.addObstacle(190, 155, 62, 138);
+	hallMap.addObstacle(402, 155, 60, 138);
+	hallMap.addObstacle(818, 152, 62, 140);
+
+	// moonveil middle room
+	roomMap.addObstacle(0, 0, 70, 720);
+	roomMap.addObstacle(1212, 0, 68, 720);
+	roomMap.addObstacle(0, 645, 1280, 75);
+	roomMap.addObstacle(0, 0, 1280, 86);
+	roomMap.addObstacle(412, 432, 60, 118);
+	roomMap.addObstacle(808, 432, 60, 118);
+	roomMap.addObstacle(406, 162, 62, 118);
+	roomMap.addObstacle(806, 162, 62, 118);
+	roomMap.addObstacle(1060, 348, 105, 180);
+	roomMap.addObstacle(105, 500, 98, 70);
+	roomMap.addObstacle(1078, 192, 76, 76);
+
+	// moonveil inner sanctum
+	sanctumMap.addObstacle(0, 0, 62, 720);
+	sanctumMap.addObstacle(1218, 0, 62, 720);
+	sanctumMap.addObstacle(0, 0, 585, 74);
+	sanctumMap.addObstacle(700, 0, 580, 74);
+	sanctumMap.addObstacle(0, 648, 1280, 72);
+	sanctumMap.addObstacle(160, 608, 175, 112);
+	sanctumMap.addObstacle(950, 545, 268, 175);
+	sanctumMap.addObstacle(486, 478, 60, 125);
+	sanctumMap.addObstacle(740, 478, 60, 125);
+	sanctumMap.addObstacle(176, 172, 62, 130);
+	sanctumMap.addObstacle(1030, 172, 62, 130);
+
+	astralMap.init("Images//map_astral_sanctum.png", 2560, 1800, true);
+
+	astralMap.addObstacle(0, 1640, 2560, 160);
+	astralMap.addObstacle(0, 0, 2560, 120);
+	astralMap.addObstacle(0, 120, 120, 1680);
+	astralMap.addObstacle(2440, 120, 120, 1680);
+	astralMap.addObstacle(0, 120, 1160, 80);
+	astralMap.addObstacle(1400, 120, 1160, 80);
+	astralMap.addObstacle(0, 1600, 760, 200);
+	astralMap.addObstacle(1800, 1600, 640, 200);
+	astralMap.addObstacle(0, 200, 160, 520);
+	astralMap.addObstacle(2400, 200, 160, 520);
+	astralMap.addObstacle(0, 1160, 160, 640);
+	astralMap.addObstacle(2400, 1160, 40, 640);
+	astralMap.addObstacle(1120, 1600, 320, 200);
+	astralMap.addObstacle(0, 200, 240, 120);
+	astralMap.addObstacle(440, 200, 240, 40);
+	astralMap.addObstacle(2320, 200, 240, 120);
+	astralMap.addObstacle(1880, 200, 200, 40);
+	astralMap.addObstacle(0, 1520, 240, 280);
+	astralMap.addObstacle(2320, 1520, 80, 280);
+	astralMap.addObstacle(720, 200, 120, 40);
+	astralMap.addObstacle(1720, 200, 120, 40);
+	astralMap.addObstacle(0, 320, 200, 80);
+	astralMap.addObstacle(2360, 320, 200, 80);
+	astralMap.addObstacle(0, 200, 280, 80);
+	astralMap.addObstacle(2280, 200, 280, 80);
+	astralMap.addObstacle(0, 1560, 280, 240);
+	astralMap.addObstacle(2280, 1560, 40, 240);
+	astralMap.addObstacle(0, 1480, 200, 320);
+	astralMap.addObstacle(2360, 1480, 40, 320);
+	astralMap.addObstacle(0, 200, 320, 40);
+	astralMap.addObstacle(1080, 200, 40, 40);
+	astralMap.addObstacle(2240, 200, 320, 40);
+
+	mage.init(MAGE_HALL_X, MAGE_HALL_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Mage");
+	mage.loadImage("Images//idle_mage.png");
+
 	forestWarden.init(WARDEN_X, WARDEN_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Forest Warden");
 	forestWarden.loadImage("Images//idle_forest_warden.png");
 
@@ -1833,6 +2801,17 @@ int main()
 	travelSilverleafHoverImg = iLoadImage("Images//hover_travel_silverleaf.png");
 	travelMoonveilImg = iLoadImage("Images//travel_moonveil.png");
 	travelMoonveilHoverImg = iLoadImage("Images//hover_travel_moonveil.png");
+	travelAstralImg = iLoadImage("Images//travel_astral.png");
+	travelAstralHoverImg = iLoadImage("Images//hover_travel_astral.png");
+
+	guardian.init(GUARDIAN_FLOOR_X, GUARDIAN_FLOOR_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Guardian");
+	guardian.loadImage("Images//idle_guardian.png");
+
+	guardianBoxImg = iLoadImage("Images//dialogue_box_guardian.png");
+	hollowBoxImg = iLoadImage("Images//dialogue_box_hollow.png");
+	cageImg = iLoadImage("Images//obj_cage.png");
+	cageBrokenImg = iLoadImage("Images//obj_cage_broken.png");
+	sealFloorImg = iLoadImage("Images//obj_seal.png");
 
 	kingBoxImg = iLoadImage("Images//dialogue_box_king.png");
 	villagerBoxImg = iLoadImage("Images//dialogue_box_villager.png");
@@ -1840,7 +2819,13 @@ int main()
 	restaurantOwnerBoxImg = iLoadImage("Images//dialogue_box_restaurant_owner.png");
 	wardenBoxImg = iLoadImage("Images//dialogue_box_forest_warden.png");
 	herbalistBoxImg = iLoadImage("Images//dialogue_box_herbalist.png");
+	mageBoxImg = iLoadImage("Images//dialogue_box_mage.png");
 	
+	endCardImg[0] = iLoadImage("Images//end_card_1.png");
+	endCardImg[1] = iLoadImage("Images//end_card_2.png");
+	endCardImg[2] = iLoadImage("Images//end_card_3.png");
+	endCardImg[3] = iLoadImage("Images//end_card_4.png");
+
 	iStart();
 	return 0;
 }

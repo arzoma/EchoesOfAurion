@@ -14,11 +14,13 @@ private:
 	int hoodedGiftIcon; // placeholder
 	int compassIcon;
 	int starwheelIcon;
+	int charmIcon;
 
 	bool hasPendant;
 	bool hasHoodedGift;
 	bool hasCompass;
 	bool hasStarwheel;
+	bool hasCharm;
 
 	int selectedItem; // 0 = none, 1 = pendant, 2 = hearth ember, 3 = compass, 4 = starwheel
 	bool isOpen;
@@ -30,6 +32,8 @@ public:
 	void loadImages();
 
 	void givePendant();
+	bool getHasPendant();
+
 	void giveHoodedGift();
 
 	void giveCompass();
@@ -39,6 +43,10 @@ public:
 	void giveStarwheel();
 	bool getHasStarwheel();
 	int  getStarwheelIcon();
+
+	void giveCharm();
+	bool getHasCharm();
+	int  getCharmIcon();
 
 	int getHoodedGiftIcon();
 	bool getHasHoodedGift();

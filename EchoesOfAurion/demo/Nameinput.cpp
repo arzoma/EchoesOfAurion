@@ -125,3 +125,8 @@ char* NameInput::getName()
 {
 	return playerName;
 }
+
+void NameInput::setName(char* n)
+{
+	strcpy_s(playerName, n);
+}

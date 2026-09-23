@@ -11,7 +11,7 @@ void iText(double x, double y, char *str, void *font);
 
 const int ICON_X = 1180, ICON_Y = 630, ICON_SIZE = 70;
 
-const int SLOT_X0 = 260, SLOT_X1 = 355, SLOT_X2 = 445, SLOT_X3 = 535;;
+const int SLOT_X0 = 260, SLOT_X1 = 355, SLOT_X2 = 445, SLOT_X3 = 535, SLOT_X4 = 625;
 const int SLOT_Y = 445;
 const int SLOT_SIZE = 64;
 
@@ -30,11 +30,13 @@ void Inventory::loadImages()
 	hoodedGiftIcon = iLoadImage("Images//hearth_ember.png");
 	compassIcon = iLoadImage("Images//forest_compass.png");
 	starwheelIcon = iLoadImage("Images//starwheel.png");
+	charmIcon = iLoadImage("Images//veilstep_charm.png");
 
 	hasPendant = false;
 	hasHoodedGift = false;
 	hasCompass = false;
 	hasStarwheel = false;
+	hasCharm = false;
 
 	selectedItem = 0;
 	isOpen = false;
@@ -43,6 +45,11 @@ void Inventory::loadImages()
 void Inventory::givePendant()
 {
 	hasPendant = true;
+}
+
+bool Inventory::getHasPendant()
+{
+	return hasPendant;
 }
 
 void Inventory::giveHoodedGift()
@@ -88,6 +95,19 @@ bool Inventory::getHasHoodedGift()
 	return hasHoodedGift;
 }
 
+void Inventory::giveCharm()
+{
+	hasCharm = true;
+}
+bool Inventory::getHasCharm()
+{
+	return hasCharm;
+}
+int  Inventory::getCharmIcon()
+{
+	return charmIcon;
+}
+
 bool Inventory::getIsOpen()
 {
 	return isOpen;
@@ -125,6 +145,10 @@ bool Inventory::handleClick(int mx, int my)
 		if (hasStarwheel && isInsideBox(mx, my, SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 4;
+		}
+		if (hasCharm && isInsideBox(mx, my, SLOT_X4, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		{
+			selectedItem = 5;
 		}
 
 		return true;
@@ -169,6 +193,10 @@ void Inventory::draw(int mouseX, int mouseY)
 	{
 		iShowImage(SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE, starwheelIcon);
 	}
+	if (hasCharm)
+	{
+		iShowImage(SLOT_X4, SLOT_Y, SLOT_SIZE, SLOT_SIZE, charmIcon);
+	}
 
 	if (selectedItem != 0)
 	{
@@ -178,6 +206,7 @@ void Inventory::draw(int mouseX, int mouseY)
 		if (selectedItem == 2) { previewIcon = hoodedGiftIcon; name = "Hearth Ember"; }
 		else if (selectedItem == 3) { previewIcon = compassIcon; name = "Forest Compass"; }
 		else if (selectedItem == 4) { previewIcon = starwheelIcon; name = "Guardian's Starwheel"; }
+		else if (selectedItem == 5) { previewIcon = charmIcon; name = "Veilstep Charm"; }
 
 		iShowImage(PREVIEW_X, PREVIEW_Y, PREVIEW_SIZE, PREVIEW_SIZE, previewIcon);
 
