@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 #include "iGraphics.h"
 #include "Utils.hpp"
 #include "MainMenu.hpp"
@@ -248,6 +249,8 @@ int guardianBoxImg;
 int hollowBoxImg;
 int cageImg, cageBrokenImg;
 int sealFloorImg;
+int hollowFloorImg;
+int astralTick = 0;
 int endCardImg[4];
 
 int astralStep = -1;
@@ -689,17 +692,18 @@ const int MAGE_SANCTUM_X = 300, MAGE_SANCTUM_Y = 300;
 const int ASTRAL_SPAWN_X = 1240, ASTRAL_SPAWN_Y = 170;
 const int CAGE_X = 1180, CAGE_Y = 1400, CAGE_W = 200, CAGE_H = 200;
 const int GUARDIAN_FLOOR_X = 1235, GUARDIAN_FLOOR_Y = 1440;
+const int HOLLOW_FLOOR_X = 1110, HOLLOW_FLOOR_Y = 690, HOLLOW_FLOOR_SIZE = 340;
 
 const int FLOOR_SEAL_COUNT = 5;
 const int FLOOR_SEAL[FLOOR_SEAL_COUNT][2] =
 {
-	{ 531, 1081 },
-	{ 1221, 1270 },
-	{ 1886, 1081 },
-	{ 556, 591 },
-	{ 1876, 591 }
+	{ 543, 1077 },
+	{ 1218, 1286 },
+	{ 1896, 1078 },
+	{ 542, 566 },
+	{ 1898, 567 }
 };
-const int FLOOR_SEAL_SIZE = 128;
+const int FLOOR_SEAL_SIZE = 120;
 
 const int EPILOGUE_IN = 40, EPILOGUE_HOLD = 260;
 
@@ -1276,6 +1280,9 @@ void iDraw()
 			iShowImage(FLOOR_SEAL[i][0] - cx, FLOOR_SEAL[i][1] - cy,
 			FLOOR_SEAL_SIZE, FLOOR_SEAL_SIZE, sealFloorImg);
 		}
+
+		g_imgAlpha = 0.34f + 0.06f * (float)sin(astralTick * 0.015);
+		iShowImage(HOLLOW_FLOOR_X - cx, HOLLOW_FLOOR_Y - cy, HOLLOW_FLOOR_SIZE, HOLLOW_FLOOR_SIZE, hollowFloorImg);
 
 		guardian.draw(cx, cy);
 		iShowImage(CAGE_X - cx, CAGE_Y - cy, CAGE_W, CAGE_H, cageBroken ? cageBrokenImg : cageImg);
@@ -2437,6 +2444,8 @@ void update()
 {
 	updateFade();
 
+	if (currentState == ASTRAL_FLOOR) astralTick++;
+
 	if (currentState == TITLE_CARD && fadePhase == FADE_NONE)
 	{
 		titleTick++;
@@ -2816,6 +2825,8 @@ int main()
 	cageImg = iLoadImage("Images//obj_cage.png");
 	cageBrokenImg = iLoadImage("Images//obj_cage_broken.png");
 	sealFloorImg = iLoadImage("Images//obj_seal.png");
+
+	hollowFloorImg = iLoadImage("Images//hollow_1.png");
 
 	kingBoxImg = iLoadImage("Images//dialogue_box_king.png");
 	villagerBoxImg = iLoadImage("Images//dialogue_box_villager.png");
