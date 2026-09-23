@@ -643,7 +643,6 @@ const int RESTAURANT_PLAYER_Y = 27;
 const int RESTAURANT_NPC_X = 500;
 const int RESTAURANT_NPC_Y = 380;
 
-
 const int RESTAURANT_DOOR_X = 2143;
 const int RESTAURANT_DOOR_Y = 1300;
 const int RESTAURANT_DOOR_W = 67;
@@ -2230,18 +2229,16 @@ void fixedUpdate()
 		};
 
 
-if (rectanglesOverlap(player.getFeetRect(), restaurantTrigger))
-{
-	enterRestaurant();
+		if (rectanglesOverlap(player.getFeetRect(), restaurantTrigger))
+		{
+			enterRestaurant();
 
 		}
 
 		return;
-
 	}
 
-if (currentState == RESTAURANT)
-
+	if (currentState == RESTAURANT)
 	{
 
 		if (dialogueBox.isActive())
@@ -2265,7 +2262,7 @@ if (currentState == RESTAURANT)
 		}
 
 		return;
-	}*/
+	}
 
 	if (currentState == FOREST)
 	{
