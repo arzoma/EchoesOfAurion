@@ -680,20 +680,24 @@ const int HALL_SPAWN_X = 600, HALL_SPAWN_Y = 95;
 const int MAGE_HALL_X = 880, MAGE_HALL_Y = 300;
 const int HALL_DOOR_X = 1175, HALL_DOOR_Y = 240, HALL_DOOR_W = 60, HALL_DOOR_H = 140;
 
-const int ROOM_SPAWN_X = 160, ROOM_SPAWN_Y = 240;
+const int ROOM_SPAWN_X = 142, ROOM_SPAWN_Y = 240;
 const int ROOM_DOOR_X = 565, ROOM_DOOR_Y = 86, ROOM_DOOR_W = 155, ROOM_DOOR_H = 80;
 
-const int SANCTUM_SPAWN_X = 640, SANCTUM_SPAWN_Y = 110;
+const int SANCTUM_SPAWN_X = 622, SANCTUM_SPAWN_Y = 110;
 const int MAGE_SANCTUM_X = 300, MAGE_SANCTUM_Y = 300;
 
 const int ASTRAL_SPAWN_X = 1240, ASTRAL_SPAWN_Y = 170;
-const int CAGE_X = 1180, CAGE_Y = 1320, CAGE_W = 200, CAGE_H = 280;
-const int GUARDIAN_FLOOR_X = 1235, GUARDIAN_FLOOR_Y = 1390;
+const int CAGE_X = 1180, CAGE_Y = 1400, CAGE_W = 200, CAGE_H = 200;
+const int GUARDIAN_FLOOR_X = 1235, GUARDIAN_FLOOR_Y = 1440;
 
 const int FLOOR_SEAL_COUNT = 5;
 const int FLOOR_SEAL[FLOOR_SEAL_COUNT][2] =
 {
-	{ 560, 500 }, { 520, 1180 }, { 1240, 1320 }, { 1960, 1180 }, { 1940, 500 }
+	{ 531, 1081 },
+	{ 1221, 1270 },
+	{ 1886, 1081 },
+	{ 556, 591 },
+	{ 1876, 591 }
 };
 const int FLOOR_SEAL_SIZE = 128;
 
@@ -1273,9 +1277,9 @@ void iDraw()
 			FLOOR_SEAL_SIZE, FLOOR_SEAL_SIZE, sealFloorImg);
 		}
 
+		guardian.draw(cx, cy);
 		iShowImage(CAGE_X - cx, CAGE_Y - cy, CAGE_W, CAGE_H, cageBroken ? cageBrokenImg : cageImg);
 
-		guardian.draw(cx, cy);
 		player.draw(cx, cy);
 
 		dialogueBox.draw(mouseX, mouseY);

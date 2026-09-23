@@ -260,6 +260,8 @@ void FinalFight::start(bool playerHasWheel, Player &player)
 	for (int i = 0; i < FF_MONSTERS; i++) monsters[i].alive = false;
 	monsterTimer = MON_SPAWN_GAP;
 
+	monHintShown = false;
+
 	hasWheel = playerHasWheel;
 	holdTicks = 0;
 	holdCooldown = 0;
@@ -510,6 +512,11 @@ void FinalFight::updateMonsters(Player &player)
 			else                { monsters[i].x = 200 + rand() % 880; monsters[i].y = 670; }
 
 			monsters[i].alive = true;
+			if (!monHintShown)
+			{
+				monHintShown = true;
+				showBottomText("Lead them to the Guardian. He can still swat them.", 420);
+			}
 			monsters[i].frame = 0;
 			monsters[i].frameTimer = 0;
 			break;

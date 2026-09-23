@@ -1,6 +1,8 @@
 #ifndef MAINMENU_HPP
 #define MAINMENU_HPP
 
+const int MENU_ORBS = 16;
+
 class MainMenu{
 
 private:
@@ -22,6 +24,29 @@ private:
 
 	int mouseX;
 	int mouseY;
+
+	int orbImg;
+	int glowSoftImg;
+	int shootingStarImg;
+
+	int fxTick;
+
+	double orbX[MENU_ORBS];
+	double orbY[MENU_ORBS];
+	double orbSpeed[MENU_ORBS];
+	double orbPhase[MENU_ORBS];
+	int    orbSize[MENU_ORBS];
+	int orbLife[MENU_ORBS];
+	int orbMax[MENU_ORBS];
+
+	double starX, starY, starScale;
+	int starTimer;
+	bool starActive;
+	int starLife;
+
+	void initFx();
+	void updateFx();
+	void drawFx();
 
 public:
 

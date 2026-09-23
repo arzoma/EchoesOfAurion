@@ -89,6 +89,8 @@ private:
 	void hitPlayer(Player &player, double fromX, double fromY);
 	void showBottomText(char* text, int ticks);
 
+	bool monHintShown;
+
 	void drawTelegraphs();
 	void drawHud(int mouseX, int mouseY);
 
