@@ -82,6 +82,7 @@
     <ClCompile Include="Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio.hpp" />
     <ClInclude Include="Constants.hpp" />
     <ClInclude Include="Cookinggame.hpp" />
     <ClInclude Include="Credits.hpp" />

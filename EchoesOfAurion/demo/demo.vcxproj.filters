@@ -125,5 +125,8 @@
     <ClInclude Include="SaveGame.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Audio.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

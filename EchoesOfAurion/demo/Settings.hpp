@@ -34,8 +34,8 @@ public:
 
 	int mouseClick(int mx, int my);
 
-	bool isMusicOn();
-	bool isSfxOn();
+	//bool isMusicOn();
+	//bool isSfxOn();
 
 };
 

@@ -1,5 +1,6 @@
 #include "Settings.hpp"
 #include "Constants.hpp"
+#include "Audio.hpp"
 
 unsigned int iLoadImage(char filename[]);
 void iShowImage(int x, int y, int width, int height, unsigned int texture);
@@ -100,6 +101,8 @@ int Settings::mouseClick(int mx, int my)
 		my >= TOGGLE_MUSIC_Y && my <= TOGGLE_MUSIC_Y + TOGGLE_HEIGHT)
 	{
 		musicOn = !musicOn;
+		setMusicEnabled(musicOn);
+		playClick();
 	}
 
 	// toggle sfx
@@ -107,12 +110,15 @@ int Settings::mouseClick(int mx, int my)
 		my >= TOGGLE_SFX_Y && my <= TOGGLE_SFX_Y + TOGGLE_HEIGHT)
 	{
 		sfxOn = !sfxOn;
+		setSfxEnabled(sfxOn);
+		if (sfxOn) playClick();
 	}
 
 	// back button
 	if (mx >= BACK_BUTTON_X && mx <= BACK_BUTTON_X + BACK_BUTTON_SIZE &&
 		my >= BACK_BUTTON_Y && my <= BACK_BUTTON_Y + BACK_BUTTON_SIZE)
 	{
+		playClick();
 		return 1;
 	}
 

@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cmath>
 #include "iGraphics.h"
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 #include "Utils.hpp"
 #include "MainMenu.hpp"
 #include "Settings.hpp"
@@ -21,6 +23,118 @@
 #include "MirrorHall.hpp"
 #include "FinalFight.hpp"
 #include "SaveGame.hpp"
+#include "Audio.hpp"
+
+static int  currentTrack = MUSIC_NONE;
+static bool musicEnabled = true;
+static bool sfxEnabled = true;
+static bool musicOpen = false;
+static bool sfxOpen = false;
+static int  loopCheckTick = 0;
+
+static char* trackFile(int t)
+{
+	if (t == MUSIC_MENU)    return "Audios\\bgm_menu.mp3";
+	if (t == MUSIC_KITCHEN) return "Audios\\bgm_kitchen.mp3";
+	if (t == MUSIC_FOREST)  return "Audios\\bgm_forest.mp3";
+	if (t == MUSIC_TEMPLE)  return "Audios\\bgm_temple.mp3";
+	if (t == MUSIC_FINAL)   return "Audios\\bgm_final.mp3";
+	return 0;
+}
+
+static void closeMusicDevice()
+{
+	if (!musicOpen) return;
+
+	mciSendStringA("close bgm", 0, 0, 0);
+	musicOpen = false;
+}
+
+static void openAndPlayCurrent()
+{
+	if (musicOpen) return;
+	if (!musicEnabled) return;
+
+	char* f = trackFile(currentTrack);
+	if (f == 0) return;
+
+	char cmd[300];
+	sprintf_s(cmd, "open \"%s\" type mpegvideo alias bgm", f);
+
+	if (mciSendStringA(cmd, 0, 0, 0) != 0) return;
+
+	musicOpen = true;
+
+	mciSendStringA("setaudio bgm volume to 450", 0, 0, 0);
+	mciSendStringA("play bgm from 0", 0, 0, 0);
+}
+
+void stopMusic()
+{
+	closeMusicDevice();
+	currentTrack = MUSIC_NONE;
+}
+
+void playMusic(MusicTrack t)
+{
+	if (t == currentTrack) return;
+
+	closeMusicDevice();
+	currentTrack = t;
+	openAndPlayCurrent();
+}
+
+static void keepMusicLooping()
+{
+	if (!musicOpen) return;
+
+	loopCheckTick++;
+	if (loopCheckTick < 60) return;
+	loopCheckTick = 0;
+
+	char mode[64];
+	mode[0] = '\0';
+	mciSendStringA("status bgm mode", mode, sizeof(mode), 0);
+
+	if (mode[0] == 's' && mode[1] == 't')
+	{
+		mciSendStringA("play bgm from 0", 0, 0, 0);
+	}
+}
+
+void playClick()
+{
+	if (!sfxEnabled) return;
+
+	if (!sfxOpen)
+	{
+		if (mciSendStringA("open \"Audios\\sfx_click.wav\" type waveaudio alias click", 0, 0, 0) != 0) return;
+
+		sfxOpen = true;
+		mciSendStringA("setaudio click volume to 700", 0, 0, 0);
+	}
+
+	mciSendStringA("play click from 0", 0, 0, 0);
+}
+
+void setMusicEnabled(bool on)
+{
+	musicEnabled = on;
+
+	if (!on)
+	{
+		closeMusicDevice();
+	}
+	else
+	{
+		openAndPlayCurrent();
+	}
+}
+
+void setSfxEnabled(bool on)
+{
+	sfxEnabled = on;
+}
 
 enum GameState{
 
@@ -1033,8 +1147,33 @@ void continueGame()
 	}
 }
 
+static void updateMusic()
+{
+	if (currentState == MAIN_MENU || currentState == SETTINGS ||
+		currentState == CREDITS || currentState == NAME_INPUT)
+		playMusic(MUSIC_MENU);
+
+	else if (currentState == COOKING_GAME || currentState == SERVING_GAME)
+		playMusic(MUSIC_KITCHEN);
+
+	else if (currentState == FOREST_TRAIL)
+		playMusic(MUSIC_FOREST);
+
+	else if (currentState == GHOST_CHASE || currentState == MIRROR_HALL)
+		playMusic(MUSIC_TEMPLE);
+
+	else if (currentState == FINAL_FIGHT)
+		playMusic(MUSIC_FINAL);
+
+	else
+		stopMusic();
+
+	keepMusicLooping();
+}
+
 void iDraw()
 {
+	updateMusic();
 	iClear();
 
 	switch (currentState)
@@ -1377,6 +1516,8 @@ void iMouse(int button, int state, int mx, int my)
 	{
 		int result = mainMenu.mouseClick(button, state, mx, my);
 
+		if (result != 0) playClick();
+
 		switch (result)
 		{
 		case 1:
@@ -1437,6 +1578,7 @@ void iMouse(int button, int state, int mx, int my)
 			if (result == 1)
 			{
 				// back button clicked
+				playClick();
 				requestFade(MAIN_MENU);
 			}
 			return;
