@@ -30,15 +30,14 @@ static bool musicEnabled = true;
 static bool sfxEnabled = true;
 static bool musicOpen = false;
 static bool sfxOpen = false;
-static int  loopCheckTick = 0;
 
 static char* trackFile(int t)
 {
-	if (t == MUSIC_MENU)    return "Audios\\bgm_menu.mp3";
-	if (t == MUSIC_KITCHEN) return "Audios\\bgm_kitchen.mp3";
-	if (t == MUSIC_FOREST)  return "Audios\\bgm_forest.mp3";
-	if (t == MUSIC_TEMPLE)  return "Audios\\bgm_temple.mp3";
-	if (t == MUSIC_FINAL)   return "Audios\\bgm_final.mp3";
+	if (t == MUSIC_MENU)    return "Audios\\bgm_menu.wav";
+	if (t == MUSIC_KITCHEN) return "Audios\\bgm_kitchen.wav";
+	if (t == MUSIC_FOREST)  return "Audios\\bgm_forest.wav";
+	if (t == MUSIC_TEMPLE)  return "Audios\\bgm_temple.wav";
+	if (t == MUSIC_FINAL)   return "Audios\\bgm_final.wav";
 	return 0;
 }
 
@@ -50,23 +49,30 @@ static void closeMusicDevice()
 	musicOpen = false;
 }
 
+static bool audioFailed = false;
+
 static void openAndPlayCurrent()
 {
 	if (musicOpen) return;
 	if (!musicEnabled) return;
+	if (audioFailed) return;
 
 	char* f = trackFile(currentTrack);
 	if (f == 0) return;
 
 	char cmd[300];
-	sprintf_s(cmd, "open \"%s\" type mpegvideo alias bgm", f);
+	sprintf_s(cmd, "open \"%s\" type waveaudio alias bgm", f);
 
-	if (mciSendStringA(cmd, 0, 0, 0) != 0) return;
+	if (mciSendStringA(cmd, 0, 0, 0) != 0)
+	{
+		audioFailed = true;
+		return;
+	}
 
 	musicOpen = true;
 
 	mciSendStringA("setaudio bgm volume to 450", 0, 0, 0);
-	mciSendStringA("play bgm from 0", 0, 0, 0);
+	mciSendStringA("play bgm from 0 repeat", 0, 0, 0);
 }
 
 void stopMusic()
@@ -82,24 +88,6 @@ void playMusic(MusicTrack t)
 	closeMusicDevice();
 	currentTrack = t;
 	openAndPlayCurrent();
-}
-
-static void keepMusicLooping()
-{
-	if (!musicOpen) return;
-
-	loopCheckTick++;
-	if (loopCheckTick < 60) return;
-	loopCheckTick = 0;
-
-	char mode[64];
-	mode[0] = '\0';
-	mciSendStringA("status bgm mode", mode, sizeof(mode), 0);
-
-	if (mode[0] == 's' && mode[1] == 't')
-	{
-		mciSendStringA("play bgm from 0", 0, 0, 0);
-	}
 }
 
 void playClick()
@@ -1168,7 +1156,6 @@ static void updateMusic()
 	else
 		stopMusic();
 
-	keepMusicLooping();
 }
 
 void iDraw()
