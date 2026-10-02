@@ -72,7 +72,7 @@ static void openAndPlayCurrent()
 	musicOpen = true;
 
 	mciSendStringA("setaudio bgm volume to 450", 0, 0, 0);
-	mciSendStringA("play bgm from 0 repeat", 0, 0, 0);
+	mciSendStringA("play bgm from 0", 0, 0, 0);
 }
 
 void stopMusic()
@@ -88,6 +88,26 @@ void playMusic(MusicTrack t)
 	closeMusicDevice();
 	currentTrack = t;
 	openAndPlayCurrent();
+}
+
+static int loopCheckTick = 0;
+
+static void keepMusicLooping()
+{
+	if (!musicOpen) return;
+
+	loopCheckTick++;
+	if (loopCheckTick < 60) return;
+	loopCheckTick = 0;
+
+	char mode[64];
+	mode[0] = '\0';
+	mciSendStringA("status bgm mode", mode, sizeof(mode), 0);
+
+	if (mode[0] == 's' && mode[1] == 't')
+	{
+		mciSendStringA("play bgm from 0", 0, 0, 0);
+	}
 }
 
 void playClick()
@@ -130,6 +150,7 @@ enum GameState{
 	SETTINGS,
 	CREDITS,
 	NAME_INPUT,
+	LORE_INTRO,
 	THRONE_ROOM,
 	HALLWAY,
 	VILLAGE,
@@ -218,6 +239,17 @@ void drawFadeOverlay()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+void(*pendingSetup)() = 0;
+
+void runPendingSetup()
+{
+	if (pendingSetup == 0) return;
+
+	void(*f)() = pendingSetup;
+	pendingSetup = 0;
+	f();
+}
+
 void updateFade()
 {
 	if (fadePhase == FADE_NONE) return;
@@ -227,6 +259,7 @@ void updateFade()
 	if (fadePhase == FADE_OUT && fadeTick >= FADE_TICKS)
 	{
 		currentState = fadePendingState;
+		runPendingSetup();
 		fadePhase = FADE_IN;
 		fadeTick = 0;
 	}
@@ -258,13 +291,13 @@ void requestTitleCard(char* l1, char* l2, GameState next)
 	requestFade(TITLE_CARD);
 }
 
-void drawFadingText(int x, int y, char* s, float alpha, void* font, int track)
+void drawFadingText(int x, int y, char* s, float alpha, void* font, int track, float r = 1.0f, float g = 1.0f, float b = 1.0f)
 {
 	if (alpha <= 0.0f) return;
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(1.0f, 1.0f, 1.0f, alpha);
+	glColor4f(r, g, b, alpha);
 
 	if (track == 0)
 	{
@@ -393,6 +426,8 @@ int travelMoonveilImg, travelMoonveilHoverImg;
 
 bool showMoonveilPrompt = false;
 bool showingJournalImage = false;
+
+int gameBackImg, gameBackHoverImg;
 
 int clearingStep = -1;
 
@@ -633,7 +668,7 @@ char* mageHall1[] = { "Stop there. The floor past the second pillar doesn't hold
 char* mcHall1[] = { "Who are you?" };
 char* mageHall2[] = { "Someone who was here before you. That's all it needs to be." };
 char* mcHall2[] = { "I'm looking for the Guardian. He came this way." };
-char* mageHall3[] = { "He came through in the spring. He went down. He did not come up." };
+char* mageHall3[] = { "He came through two months ago. He went down. He did not come up." };
 char* mcHall3[] = { "And you let him?" };
 char* mageHall4[] =
 {
@@ -677,14 +712,10 @@ char routeOption2[] = "Take the upper halls.";
 char* veylAfter[] =
 {
 	"The lights are back. I felt it from here.",
-	"The way is open, and it opened easily. Remember what I said.",
+	"There it is. Two months, and it opens for someone who's been here a day.",
 	"Go on. I'll keep the door behind you."
 };
 
-char* veylOpen[] =
-{
-	"There it is. Six months, and it opens for someone who's been here a day."
-};
 char* mcOpen[] = { "Come with me." };
 char* veylOpen2[] =
 {
@@ -707,7 +738,7 @@ char* mcCage3[] = { "That's not encouraging." };
 char* guardCage3[] = { "It isn't meant to be. It's the reason this is happening." };
 char* hollowCage[] =
 {
-	"HE HAS NOT SAID MY NAME IN SIX MONTHS.",
+	"HE HAS NOT SAID MY NAME IN TWO MONTHS.",
 	"YOU WILL BE EASIER."
 };
 char* guardCage4[] = { "Get to a seal. Stand there. Don't listen to it and don't answer it - go." };
@@ -724,7 +755,7 @@ char* guardEnd2[] =
 char* mcEnd3[] = { "You said I'd be weaker than you." };
 char* guardEnd3[] =
 {
-	"You are. You also did in a week what I couldn't do in six months, and you did not do any of it by yourself.",
+	"You are. You also did in a week what I couldn't do in two months, and you did not do any of it by yourself.",
 	"A villager pointed you at a restaurant. A herbalist gave you a compass. A man who wouldn't tell you his name held a door open for a day and a night.",
 	"One Guardian was always the mistake. It just took six hundred years for the mistake to catch up."
 };
@@ -736,6 +767,38 @@ char* EPILOGUE_TEXT[4] =
 	"Veyl stopped being the only one keeping the temple. He complained about the noise.",
 	"And the next time the seals need watching, there will be more than one of us."
 };
+
+const int LORE_COUNT = 5;
+const int LORE_IN = 30;
+const int LORE_FADE = 45;
+const int LORE_X = 120;
+const int LORE_TOP_Y = 600;
+const int LORE_BEAT_GAP = 96;
+const int LORE_LINE_GAP = 36;
+
+char* LORE_TEXT[LORE_COUNT][2] =
+{
+	{ "Long ago, the kingdom of Aurion drew its magic from the Wellspring -",
+	"a core of living mana buried deep beneath the earth." },
+
+	{ "Something came up out of the dark to take it. It had a name,",
+	"and every mouth that spoke that name made it stronger." },
+
+	{ "Five mages spent the last of their mana to raise five sacred seals",
+	"and bind it beneath Aurion. Then they struck its name from memory." },
+
+	{ "The seals have held for six hundred years. Each generation,",
+	"a prophecy chooses one Guardian to keep them." },
+
+	{ "The current Guardian has been missing for two months.",
+	"" }
+};
+
+int  loreLine = 0;
+int  loreTick = 0;
+bool loreFading = false;
+int  loreFadeTick = 0;
+bool loreDone = false;
 
 const int THRONE_PLAYER_X = 595, THRONE_PLAYER_Y = 150;
 const int HALLWAY_PLAYER_X = 595, HALLWAY_PLAYER_Y = 300;
@@ -785,10 +848,10 @@ const int HALL_SPAWN_X = 600, HALL_SPAWN_Y = 95;
 const int MAGE_HALL_X = 880, MAGE_HALL_Y = 300;
 const int HALL_DOOR_X = 1175, HALL_DOOR_Y = 240, HALL_DOOR_W = 60, HALL_DOOR_H = 140;
 
-const int ROOM_SPAWN_X = 142, ROOM_SPAWN_Y = 240;
+const int ROOM_SPAWN_X = 136, ROOM_SPAWN_Y = 240;
 const int ROOM_DOOR_X = 565, ROOM_DOOR_Y = 86, ROOM_DOOR_W = 155, ROOM_DOOR_H = 80;
 
-const int SANCTUM_SPAWN_X = 622, SANCTUM_SPAWN_Y = 110;
+const int SANCTUM_SPAWN_X = 616, SANCTUM_SPAWN_Y = 110;
 const int MAGE_SANCTUM_X = 300, MAGE_SANCTUM_Y = 300;
 
 const int ASTRAL_SPAWN_X = 1240, ASTRAL_SPAWN_Y = 170;
@@ -848,7 +911,7 @@ void enterThroneRoom()
 	requestTitleCard("Throne Room", "Royal Palace of Aurion", THRONE_ROOM);
 }
 
-void enterHallway()
+void setupHallway()
 {
 	//currentState = HALLWAY;
 	hallwayStep = 0;
@@ -858,7 +921,11 @@ void enterHallway()
 	player.setFacing(DIR_FRONT);
 
 	dialogueBox.startDialogue(nameInput.getName(), hallwayLines1, HALLWAY_LINE_COUNT_1, true);
+}
 
+void enterHallway()
+{
+	pendingSetup = setupHallway;
 	requestTitleCard("Palace Hallway", 0, HALLWAY);
 }
 
@@ -930,14 +997,18 @@ void enterMoonveilApproach()
 	saveAt(SAVE_MOONVEIL);
 }
 
-void enterMoonveilHall()
+void setupMoonveilHall()
 {
 	player.init(HALL_SPAWN_X, HALL_SPAWN_Y);
 	player.setFacing(DIR_BACK);
 
 	mageStep = 0;
 	dialogueBox.startDialogue("Mage", mageHall1, 1, false, mageBoxImg);
+}
 
+void enterMoonveilHall()
+{
+	pendingSetup = setupMoonveilHall;
 	requestFade(MOONVEIL_HALL);
 }
 
@@ -949,7 +1020,7 @@ void enterMoonveilRoom()
 	requestFade(MOONVEIL_ROOM);
 }
 
-void enterMoonveilSanctum()
+void setupMoonveilSanctum()
 {
 	mage.init(MAGE_SANCTUM_X, MAGE_SANCTUM_Y, PLAYER_WIDTH, PLAYER_HEIGHT, "Veyl");
 	
@@ -958,7 +1029,11 @@ void enterMoonveilSanctum()
 
 	sanctumStep = 0;
 	dialogueBox.startDialogue(nameInput.getName(), mcSanct1, 1, true);
+}
 
+void enterMoonveilSanctum()
+{
+	pendingSetup = setupMoonveilSanctum;
 	requestFade(MOONVEIL_SANCTUM);
 }
 
@@ -974,16 +1049,19 @@ void enterMirrorHall()
 	requestFade(MIRROR_HALL);
 }
 
-void returnFromMoonveilGame()
+void setupSanctumReturn()
 {
 	player.init(SANCTUM_SPAWN_X, SANCTUM_SPAWN_Y);
-	player.setFacing(DIR_FRONT);
+	player.setFacing(DIR_BACK);
 
 	sanctumStep = 200;
 	dialogueBox.startDialogue("Veyl", veylAfter, 3, false, mageBoxImg);
+}
 
+void returnFromMoonveilGame()
+{
+	pendingSetup = setupSanctumReturn;
 	requestFade(MOONVEIL_SANCTUM);
-
 	saveAt(SAVE_ASTRAL);
 }
 
@@ -1008,18 +1086,22 @@ void enterFinalFight()
 	requestFade(FINAL_FIGHT);
 }
 
-void enterAstralEnd()
+void setupAstralEnd()
 {
 	endStep = 0;
 	cageBroken = true;
 
-	guardian.init(980, 300, PLAYER_WIDTH, PLAYER_HEIGHT, "Guardian");
+	guardian.init(980, 330, PLAYER_WIDTH, PLAYER_HEIGHT, "Guardian");
 
-	player.init(1150, 300);
+	player.init(1150, 330);
 	player.setFacing(DIR_LEFT);
 
 	dialogueBox.startDialogue(nameInput.getName(), mcEnd1, 1, true);
+}
 
+void enterAstralEnd()
+{
+	pendingSetup = setupAstralEnd;
 	requestFade(ASTRAL_END);
 }
 
@@ -1081,9 +1163,20 @@ void exitRestaurantToVillage()
 	requestFade(VILLAGE);
 }
 
+void enterLoreIntro()
+{
+	loreLine = 0;
+	loreTick = 0;
+	loreFading = false;
+	loreFadeTick = 0;
+	loreDone = false;
+
+	requestFade(LORE_INTRO);
+}
+
 void confirmName()
 {
-	enterThroneRoom();
+	enterLoreIntro();
 }
 
 bool overTravelPrompt(int mx, int my)
@@ -1096,6 +1189,36 @@ void drawTravelPrompt(int normalImg, int hoverImg)
 {
 	bool hov = overTravelPrompt(mouseX, mouseY);
 	iShowImage(TRAVEL_IMG_X, TRAVEL_IMG_Y, 350, 197, hov ? hoverImg : normalImg);
+}
+
+const int GAME_BACK_SIZE = 70;
+const int GAME_BACK_X = 30;
+const int GAME_BACK_Y = SCREEN_HEIGHT - GAME_BACK_SIZE - 30;
+
+bool stateHasBackButton()
+{
+	return currentState == THRONE_ROOM || currentState == HALLWAY ||
+		currentState == VILLAGE || currentState == RESTAURANT ||
+		currentState == FOREST || currentState == FOREST_TRAIL ||
+		currentState == MOONVEIL_APPROACH || currentState == MOONVEIL_HALL ||
+		currentState == MOONVEIL_ROOM || currentState == MOONVEIL_SANCTUM ||
+		currentState == ASTRAL_FLOOR || currentState == ASTRAL_END;
+}
+
+bool overGameBack(int mx, int my)
+{
+	return mx >= GAME_BACK_X && mx <= GAME_BACK_X + GAME_BACK_SIZE &&
+		my >= GAME_BACK_Y && my <= GAME_BACK_Y + GAME_BACK_SIZE;
+}
+
+void drawGameBackButton()
+{
+	if (!stateHasBackButton()) return;
+	if (fadePhase != FADE_NONE) return;
+
+	bool hov = overGameBack(mouseX, mouseY);
+	iShowImage(GAME_BACK_X, GAME_BACK_Y, GAME_BACK_SIZE, GAME_BACK_SIZE,
+		hov ? gameBackHoverImg : gameBackImg);
 }
 
 void continueGame()
@@ -1126,8 +1249,8 @@ void continueGame()
 		enterMoonveilApproach();
 		break;
 	case SAVE_ASTRAL:
-		enterMoonveilSanctum();
-		sanctumStep = 200;
+		pendingSetup = setupSanctumReturn;
+		requestFade(MOONVEIL_SANCTUM);
 		break;
 	default:
 		enterVillage();
@@ -1138,7 +1261,8 @@ void continueGame()
 static void updateMusic()
 {
 	if (currentState == MAIN_MENU || currentState == SETTINGS ||
-		currentState == CREDITS || currentState == NAME_INPUT)
+		currentState == CREDITS || currentState == NAME_INPUT ||
+		currentState == LORE_INTRO)
 		playMusic(MUSIC_MENU);
 
 	else if (currentState == COOKING_GAME || currentState == SERVING_GAME)
@@ -1156,6 +1280,7 @@ static void updateMusic()
 	else
 		stopMusic();
 
+	keepMusicLooping();
 }
 
 void iDraw()
@@ -1182,6 +1307,49 @@ void iDraw()
 	case NAME_INPUT:
 		nameInput.draw();
 		break;
+
+	case LORE_INTRO:
+	{
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glBegin(GL_QUADS);
+		glVertex2f(0, 0);
+		glVertex2f((float)SCREEN_WIDTH, 0);
+		glVertex2f((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+		glVertex2f(0, (float)SCREEN_HEIGHT);
+		glEnd();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+		float out = 1.0f;
+		if (loreFading)
+		{
+			out = 1.0f - (float)loreFadeTick / LORE_FADE;
+			if (out < 0.0f) out = 0.0f;
+		}
+
+		for (int i = 0; i <= loreLine && i < LORE_COUNT; i++)
+		{
+			float la = (i == loreLine && !loreFading)
+				? titleAlpha(loreTick, 0, LORE_IN) : 1.0f;
+			la *= out;
+
+			int ly = LORE_TOP_Y - i * LORE_BEAT_GAP;
+
+			drawFadingText(LORE_X, ly, LORE_TEXT[i][0], la, GLUT_BITMAP_TIMES_ROMAN_24, 2);
+
+			if (LORE_TEXT[i][1][0] != '\0')
+			{
+				drawFadingText(LORE_X, ly - LORE_LINE_GAP, LORE_TEXT[i][1], la, GLUT_BITMAP_TIMES_ROMAN_24, 2);
+			}
+		}
+
+		if (!loreFading && loreTick >= LORE_IN)
+		{
+			drawFadingText(LORE_X, 90, "click to continue", 0.4f * out, GLUT_BITMAP_9_BY_15, 1);
+		}
+
+		break;
+	}
 
 	case TITLE_CARD:
 		glDisable(GL_TEXTURE_2D);
@@ -1242,7 +1410,7 @@ void iDraw()
 		npc2.draw(villageMap.getCameraX(), villageMap.getCameraY());
 		player.draw(villageMap.getCameraX(), villageMap.getCameraY());
 
-		char coordText[100];
+		/*char coordText[100];
 
 		sprintf_s(
 			coordText,
@@ -1252,7 +1420,7 @@ void iDraw()
 			);
 
 		iSetColor(255, 255, 255);
-		iText(20, 690, coordText, GLUT_BITMAP_HELVETICA_18);
+		iText(20, 690, coordText, GLUT_BITMAP_HELVETICA_18);*/
 
 		dialogueBox.draw(mouseX, mouseY);
 		inventory.draw(mouseX, mouseY);
@@ -1306,7 +1474,7 @@ void iDraw()
 			drawTravelPrompt(travelForestImg, travelForestHoverImg);
 		}
 
-		char coordText[100];
+		/*char coordText[100];
 
 		sprintf_s(
 			coordText,
@@ -1316,7 +1484,7 @@ void iDraw()
 			);
 
 		iSetColor(255, 255, 255);
-		iText(20, 690, coordText, GLUT_BITMAP_HELVETICA_18);
+		iText(20, 690, coordText, GLUT_BITMAP_HELVETICA_18);*/
 
 		dialogueBox.draw(mouseX, mouseY);
 		inventory.draw(mouseX, mouseY);
@@ -1449,10 +1617,14 @@ void iDraw()
 		iShowImage(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, endCardImg[epilogueCard]);
 
 		float a = titleAlpha(epilogueTick, EPILOGUE_IN, EPILOGUE_IN + 45);
+
+		drawFadingText(122, 119, EPILOGUE_TEXT[epilogueCard], a * 0.85f, GLUT_BITMAP_TIMES_ROMAN_24, 3, 0.0f, 0.0f, 0.0f);
+		drawFadingText(122, 121, EPILOGUE_TEXT[epilogueCard], a * 0.85f, GLUT_BITMAP_TIMES_ROMAN_24, 3, 0.0f, 0.0f, 0.0f);
 		drawFadingText(120, 120, EPILOGUE_TEXT[epilogueCard], a, GLUT_BITMAP_TIMES_ROMAN_24, 3);
 		break;
 	}
 }
+	drawGameBackButton();
 	drawFadeOverlay();
 }
 
@@ -1497,8 +1669,17 @@ void iPassiveMouseMove(int mx, int my)
 
 void iMouse(int button, int state, int mx, int my)
 {
-	printf("%d, %d\n", mx, my);
+	//("%d, %d\n", mx, my);
 	
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN &&
+		stateHasBackButton() && overGameBack(mx, my))
+	{
+		playClick();
+		dialogueBox.close();
+		requestFade(MAIN_MENU);
+		return;
+	}
+
 	if (currentState == MAIN_MENU)
 	{
 		int result = mainMenu.mouseClick(button, state, mx, my);
@@ -1582,6 +1763,27 @@ void iMouse(int button, int state, int mx, int my)
 			bool confirmed = nameInput.mouseClick(mx, my);
 			if (confirmed) confirmName();
 		}
+		return;
+	}
+
+	if (currentState == LORE_INTRO)
+	{
+		if (button != GLUT_LEFT_BUTTON || state != GLUT_DOWN) return;
+		if (fadePhase != FADE_NONE) return;
+		if (loreFading) return;
+		if (loreTick < LORE_IN) return;
+
+		if (loreLine < LORE_COUNT - 1)
+		{
+			loreLine++;
+			loreTick = 0;
+		}
+		else
+		{
+			loreFading = true;
+			loreFadeTick = 0;
+		}
+
 		return;
 	}
 
@@ -2212,12 +2414,11 @@ void iMouse(int button, int state, int mx, int my)
 				case 2: sanctumStep = 4; dialogueBox.startOptions(charmOption1, charmOption2); break;
 				case 5: sanctumStep = 6; dialogueBox.startDialogue("Veyl", veylSanct2, 3, false, mageBoxImg); break;
 				case 6: sanctumStep = 7; dialogueBox.startOptions(routeOption1, routeOption2); break;
-				case 200: sanctumStep = 201; dialogueBox.startDialogue("Veyl", veylOpen, 1, false, mageBoxImg); break;
-				case 201: sanctumStep = 202; dialogueBox.startDialogue(nameInput.getName(), mcOpen, 1, true); break;
-				case 202: sanctumStep = 203; dialogueBox.startDialogue("Veyl", veylOpen2, 2, false, mageBoxImg); break;
-				case 203: sanctumStep = 204; dialogueBox.startDialogue(nameInput.getName(), mcOpen2, 1, true); break;
-				case 204: sanctumStep = 205; dialogueBox.startDialogue("Veyl", veylOpen3, 1, false, mageBoxImg); break;
-				case 205: sanctumStep = 206; showAstralPrompt = true; break;
+				case 200: sanctumStep = 201; dialogueBox.startDialogue(nameInput.getName(), mcOpen, 1, true); break;
+				case 201: sanctumStep = 202; dialogueBox.startDialogue("Veyl", veylOpen2, 2, false, mageBoxImg); break;
+				case 202: sanctumStep = 203; dialogueBox.startDialogue(nameInput.getName(), mcOpen2, 1, true); break;
+				case 203: sanctumStep = 204; dialogueBox.startDialogue("Veyl", veylOpen3, 1, false, mageBoxImg); break;
+				case 204: sanctumStep = 205; showAstralPrompt = true; break;
 				}
 			}
 		}
@@ -2307,6 +2508,7 @@ void iMouse(int button, int state, int mx, int my)
 
 		if (epilogueCard >= 4)
 		{
+			epilogueCard = 3;
 			requestTitleCard("ECHOES OF AURION", 0, CREDITS);
 		}
 
@@ -2533,7 +2735,11 @@ void fixedUpdate()
 
 	if (currentState == ASTRAL_FLOOR)
 	{
-		if (dialogueBox.isActive()) return;
+		if (dialogueBox.isActive())
+		{
+			player.handleInput(false, false, false, false, astralMap);
+			return;
+		}
 
 		bool up = isKeyPressed('w') || isSpecialKeyPressed(GLUT_KEY_UP);
 		bool down = isKeyPressed('s') || isSpecialKeyPressed(GLUT_KEY_DOWN);
@@ -2579,6 +2785,27 @@ void update()
 	{
 		titleTick++;
 		if (titleTick >= TITLE_HOLD) requestFade(titlePendingState);
+	}
+
+	if (currentState == LORE_INTRO)
+	{
+		if (fadePhase == FADE_NONE)
+		{
+			loreTick++;
+
+			if (loreFading && !loreDone)
+			{
+				loreFadeTick++;
+
+				if (loreFadeTick >= LORE_FADE)
+				{
+					loreDone = true;
+					enterThroneRoom();
+				}
+			}
+		}
+
+		return;
 	}
 
 	itemObtained.update();
@@ -2837,6 +3064,7 @@ int main()
 	hallMap.addObstacle(190, 155, 62, 138);
 	hallMap.addObstacle(402, 155, 60, 138);
 	hallMap.addObstacle(818, 152, 62, 140);
+	hallMap.addObstacle(MAGE_HALL_X, MAGE_HALL_Y, PLAYER_WIDTH, PLAYER_HEIGHT);
 
 	// moonveil middle room
 	roomMap.addObstacle(0, 0, 70, 720);
@@ -2863,6 +3091,7 @@ int main()
 	sanctumMap.addObstacle(740, 478, 60, 125);
 	sanctumMap.addObstacle(176, 172, 62, 130);
 	sanctumMap.addObstacle(1030, 172, 62, 130);
+	sanctumMap.addObstacle(MAGE_SANCTUM_X, MAGE_SANCTUM_Y, PLAYER_WIDTH, PLAYER_HEIGHT);
 
 	astralMap.init("Images//map_astral_sanctum.png", 2560, 1800, true);
 
@@ -2969,6 +3198,9 @@ int main()
 	endCardImg[1] = iLoadImage("Images//end_card_2.png");
 	endCardImg[2] = iLoadImage("Images//end_card_3.png");
 	endCardImg[3] = iLoadImage("Images//end_card_4.png");
+
+	gameBackImg = iLoadImage("Images//back_button.png");
+	gameBackHoverImg = iLoadImage("Images//hover_back_button.png");
 
 	iStart();
 	return 0;

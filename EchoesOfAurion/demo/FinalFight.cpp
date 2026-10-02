@@ -24,9 +24,9 @@ static const int SEAL_POS[FF_SEALS][2] =
 {
 	{ 596, 544 },   // N
 	{ 322, 389 },   // NW
-	{ 434, 147 },   // SW
-	{ 751, 147 },   // SE
-	{ 867, 389 }    // NE
+	{ 434, 137 },   // SW
+	{ 756, 137 },   // SE
+	{ 871, 389 }    // NE
 };
 
 static const int CHANNEL_TICKS = 250;
@@ -476,13 +476,32 @@ void FinalFight::hitPlayer(Player &player, double fromX, double fromY)
 	double d = sqrt(dx * dx + dy * dy);
 	if (d < 1.0) { dx = 0; dy = 1; d = 1; }
 
-	int nx = player.getX() + (int)(dx / d * KNOCKBACK);
-	int ny = player.getY() + (int)(dy / d * KNOCKBACK);
+	dx /= d;
+	dy /= d;
 
-	if (nx < 10) nx = 10;
-	if (nx > SCREEN_WIDTH - PLAYER_WIDTH - 10) nx = SCREEN_WIDTH - PLAYER_WIDTH - 10;
-	if (ny < 10) ny = 10;
-	if (ny > SCREEN_HEIGHT - PLAYER_HEIGHT - 10) ny = SCREEN_HEIGHT - PLAYER_HEIGHT - 10;
+	Rect f = player.getFeetRect();
+	int offX = f.x - player.getX();
+	int offY = f.y - player.getY();
+
+	int nx = player.getX();
+	int ny = player.getY();
+
+	for (int step = 0; step < KNOCKBACK; step++)
+	{
+		int tx = player.getX() + (int)(dx * (step + 1));
+		int ty = player.getY() + (int)(dy * (step + 1));
+
+		if (tx < 10) break;
+		if (tx > SCREEN_WIDTH - PLAYER_WIDTH - 10) break;
+		if (ty < 10) break;
+		if (ty > SCREEN_HEIGHT - PLAYER_HEIGHT - 10) break;
+
+		Rect probe = { tx + offX, ty + offY, f.w, f.h };
+		if (getMap().isBlocked(probe)) break;
+
+		nx = tx;
+		ny = ty;
+	}
 
 	player.init(nx, ny);
 	lastPX = nx;
@@ -582,6 +601,14 @@ void FinalFight::update(Player &player)
 	playerMoved = (player.getX() != lastPX || player.getY() != lastPY);
 	lastPX = player.getX();
 	lastPY = player.getY();
+
+	Rect fr = player.getFeetRect();
+	if (getMap().isBlocked(fr))
+	{
+		player.init(SPAWN_X, SPAWN_Y);
+		lastPX = SPAWN_X;
+		lastPY = SPAWN_Y;
+	}
 
 	if (invulnTicks > 0) invulnTicks--;
 	if (flashTicks > 0) flashTicks--;

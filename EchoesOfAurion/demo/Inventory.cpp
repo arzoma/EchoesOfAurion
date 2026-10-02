@@ -11,8 +11,8 @@ void iText(double x, double y, char *str, void *font);
 
 const int ICON_X = 1180, ICON_Y = 630, ICON_SIZE = 70;
 
-const int SLOT_X0 = 260, SLOT_X1 = 355, SLOT_X2 = 445, SLOT_X3 = 535, SLOT_X4 = 625;
-const int SLOT_Y = 445;
+const int SLOT_X0 = 260, SLOT_X1 = 355, SLOT_X2 = 445, SLOT_X3 = 535;
+const int SLOT_Y0 = 445, SLOT_Y1 = 355;
 const int SLOT_SIZE = 64;
 
 const int PREVIEW_X = 645, PREVIEW_Y = 158, PREVIEW_SIZE = 398;
@@ -128,25 +128,25 @@ bool Inventory::handleClick(int mx, int my)
 			return true;
 		}
 
-		if (hasPendant && isInsideBox(mx, my, SLOT_X0, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		if (hasPendant && isInsideBox(mx, my, SLOT_X0, SLOT_Y0, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 1;
 		}
 
-		if (hasHoodedGift && isInsideBox(mx, my, SLOT_X1, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		if (hasHoodedGift && isInsideBox(mx, my, SLOT_X1, SLOT_Y0, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 2;
 		}
 
-		if (hasCompass && isInsideBox(mx, my, SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		if (hasCompass && isInsideBox(mx, my, SLOT_X2, SLOT_Y0, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 3;
 		}
-		if (hasStarwheel && isInsideBox(mx, my, SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		if (hasStarwheel && isInsideBox(mx, my, SLOT_X3, SLOT_Y0, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 4;
 		}
-		if (hasCharm && isInsideBox(mx, my, SLOT_X4, SLOT_Y, SLOT_SIZE, SLOT_SIZE))
+		if (hasCharm && isInsideBox(mx, my, SLOT_X0, SLOT_Y1, SLOT_SIZE, SLOT_SIZE))
 		{
 			selectedItem = 5;
 		}
@@ -177,25 +177,25 @@ void Inventory::draw(int mouseX, int mouseY)
 
 	if (hasPendant)
 	{
-		iShowImage(SLOT_X0, SLOT_Y, SLOT_SIZE, SLOT_SIZE, pendantIcon);
+		iShowImage(SLOT_X0, SLOT_Y0, SLOT_SIZE, SLOT_SIZE, pendantIcon);
 	}
 
 	if (hasHoodedGift)
 	{
-		iShowImage(SLOT_X1, SLOT_Y, SLOT_SIZE, SLOT_SIZE, hoodedGiftIcon);
+		iShowImage(SLOT_X1, SLOT_Y0, SLOT_SIZE, SLOT_SIZE, hoodedGiftIcon);
 	}
 
 	if (hasCompass)
 	{
-		iShowImage(SLOT_X2, SLOT_Y, SLOT_SIZE, SLOT_SIZE, compassIcon);
+		iShowImage(SLOT_X2, SLOT_Y0, SLOT_SIZE, SLOT_SIZE, compassIcon);
 	}
 	if (hasStarwheel)
 	{
-		iShowImage(SLOT_X3, SLOT_Y, SLOT_SIZE, SLOT_SIZE, starwheelIcon);
+		iShowImage(SLOT_X3, SLOT_Y0, SLOT_SIZE, SLOT_SIZE, starwheelIcon);
 	}
 	if (hasCharm)
 	{
-		iShowImage(SLOT_X4, SLOT_Y, SLOT_SIZE, SLOT_SIZE, charmIcon);
+		iShowImage(SLOT_X0, SLOT_Y1, SLOT_SIZE, SLOT_SIZE, charmIcon);
 	}
 
 	if (selectedItem != 0)
